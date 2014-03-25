@@ -1,0 +1,322 @@
+{% extends "tm/base.html" %}
+{% load staticfiles %}
+
+{% block extralinks %}
+<link href="{% static 'tm/css/viewresultsstyle.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+{% block page_title %}
+	{% if author %}{{ author }}, {% endif %}{{ title }} ({{year}})
+{% endblock %}
+
+
+{% block pagecontent %}
+	<div class="hero-unit subhero">
+		<h2>
+			{% if author %}{{ author }}, {% endif %}<em>{{ title }}</em> ({{year}})
+		</h2>
+	</div>
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Features of the text</h2>
+			<div class="commentary">
+				<p>Use the buttons below to highlight lexical features of the text. Click on individual words for more information.</p>
+				<p>Jump to the <a id="tinkerlink" href="#">Tinker</a> section if you'd like to edit the text.</p>
+			</div>
+
+			<div class="btn-group" id="continuousTextButtons">
+				<button class="btn disabled">Origin: </button>
+				<button class="btn btn-info" id="colourCodeButton" data-toggle="popover" data-content="Add colour-coding to words, based on the language families from which they are derived."><i class="icon-tint icon-white"></i></button>
+				<button class="btn disabled">&nbsp;&nbsp;&nbsp;Recent words: </button>
+				<button class="btn btn-info" id="focusRecentButton" data-toggle="popover" data-content="Foreground words with a relatively recent date of first recorded use."><i class="icon-search icon-white"></i></button>
+				<button class="btn disabled">&nbsp;&nbsp;&nbsp;Rare words: </button>
+				<button class="btn btn-info" id="focusRareButton" data-toggle="popover" data-content="Foreground rare (lower-frequency) words."><i class="icon-search icon-white"></i></button>
+			</div>
+
+			<div id="textContainer">
+				<div id="continuousText"></div>
+				<div id="continuousTextKey"></div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Statistics</h2>
+			<table class="table table-bordered" id="statistics">
+				<tbody>
+					<tr><td>Tokens (words &amp; punctuation)</td><td id="ntokens"></td></tr>
+					<tr><td>Words</td><td id="nwords"></td></tr>
+					<tr><td>Distinct lemmas</td><td id="nlemmas"></td></tr>
+					<tr><td>Characters (not including spaces)</td><td id="ncharacters"></td></tr>
+					<tr><td>Mean average word length (characters)</td><td id="avechars"></td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Scatter chart</h2>
+			<div class="commentary">
+				<p>Each data point represents a word (dictionary lemma) found in this document. Position on the x-axis shows the first recorded use (based on the first quotation given in the OED). Position on the y-axis shows the word's frequency in modern English. Note that the y-axis (frequency) is logarithmic.</p>
+				<p>The size of each data point indicates the frequency of the word in this document, and the colour of the data point indicates the language family from which the word is derived (see key below). Click on a data point for more information about the word.</p>
+				<p>Dates before 1150 (the shaded area on the chart) are speculative (see discussion <a href="http://public.oed.com/aspects-of-english/english-in-time/old-english-in-the-oed/" target="ext">here</a>). For data points in this period, exact position on the x-axis is largely arbitrary, and should not be taken to indicate actual date of first use.</p>
+				<p>Proper names and unrecognized words are not shown.</p>
+			</div>
+			<div id="timelineContainer"></div>
+
+			<div id="lemmaTooltip" class="popup">
+				<h2></h2>
+				<div>
+					<div>Click for more information.</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Language families</h2>
+			<div class="commentary">
+				<p>Where do the words in this document come from? This chart aggregates the lexical content of the document into the major language families from which English words are derived.</p>
+				<p>In typical English text, the high proportion of Germanic is due in large part to the fact that most of the very common words (<em>the, and, to, for, by, with</em>, etc.) are derived from Old English, a West Germanic language.</p>
+				<p>Proper names and unrecognized words have been disregarded.</p>
+			</div>
+			<div id="languageRatioContainer"></div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Lexicon growth</h2>
+			<div class="commentary">
+				<p>What percentage of the words in this document existed in English at a given point in the past? The <span style="color: red">red</span> line in this chart is derived by looking at each word (token) in the document, and checking the date of its first recorded use (according to the OED). This shows that about <span id="growthChart1150"></span>% of the lexical content of this document existed in English by 1150; and that almost all the lexical content of this document (>95%) existed by <span id="growthChart95"></span>.</p>
+				<p>Another way to measure this is to count each distinct word (dictionary lemma) only once, regardless of how frequently it occurs in the document. For example, if the document contains multiple instances of the word <em>with</em>, we count it only once. This gives the <span style="color: blue">blue</span> line.</p>
+				<p>For typical documents, the red line (counting each token) tends to be higher and flatter than the blue line (counting distinct lemmas). This is because the most frequently-occurring words (<em>the, and, with</em>, etc.) already existed in English by 1150.</p>
+				<p>Proper names and unrecognized words have been disregarded in both measures.</p>
+			</div>
+			<div id="growthChartContainer"></div>
+
+			<div id="growthDetails" class="popup">
+				<h2></h2>
+				<div>
+					<div><span id="growthDetailsValue"></span>% of <span id="growthDetailsDesc"></span> this document existed in <span id="growthDetailsYear"></span>.</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Thesaurus mutation</h2>
+			<div class="commentary">
+				<p>Use the <a href="http://www.oed.com/thesaurus" target="ext">Historical Thesaurus</a> to randomly alter the vocabulary used in the document.</p>
+				<p>Click the 'mutate' button to generate new versions of the text. Each word highlighted in red will be replaced by a new word or phrase selected at random from synonyms (or near-synonyms) listed in the Historical Thesaurus. (Click on the word to see the full list.)</p>
+				<p>Use the slider below the text to adjust the date range from which words are selected. If no words are available within the date range set by the slider, the original word will be shown in square brackets.</p>
+			</div>
+
+			<div class="btn-group" id="thesaurusButtons">
+				<button class="btn disabled">Mutate: </button>
+				<button class="btn btn-info" id="thesaurusRiffButton" data-toggle="popover" data-content="Mutate the text using synonyms from the Historical Thesaurus."><i class="icon-random icon-white"></i></button>
+				<button class="btn disabled">&nbsp;&nbsp;&nbsp;Autoplay: </button>
+				<button class="btn btn-info" id="thesaurusPlayButton" data-toggle="popover" data-content="Generate mutated texts automatically."><i class="icon-play icon-white"></i></button>
+				<button class="btn disabled">&nbsp;&nbsp;&nbsp;Reset: </button>
+				<button class="btn btn-info" id="thesaurusResetButton" data-toggle="popover" data-content="Revert to the original text."><i class="icon-refresh icon-white"></i></button>
+			</div>
+
+			<div id="textContainer">
+				<div id="thesaurusText"></div>
+				<div id="thesaurusSlider"></div>
+				<div id="thesaurusSliderText"></div>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Lemma table</h2>
+			<div class="commentary">
+				<p>This table lists each word (dictionary lemma) identified in the document. Click column headers to sort the table.</p>
+				<p>Click on a row for more information about the word.</p>
+			</div>
+			<div id="lemmaRankContainer">
+			<table id="lemmaRank" class="table table-bordered table-condensed sortable">
+				<thead>
+					<tr>
+						<th>#</th>
+						<th sort="lemma"><i class="icon-resize-vertical icon-white"></i>&nbsp;Lemma</th>
+						<th sort="occurrences"><i class="icon-resize-vertical icon-white"></i>&nbsp;Occurrences in this document</th>
+						<th sort="frequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in mod. English (per million)</th>
+						<th sort="year"><i class="icon-resize-vertical icon-white"></i>&nbsp;First recorded use</th>
+						<th sort="origin"><i class="icon-resize-vertical icon-white"></i>&nbsp;Etymological origin</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Letter frequencies</h2>
+			<div class="commentary">
+				<p>This table shows the relative frequencies of each letter of the alphabet in this document. Click on a bar for more information.</p>
+				<p>Click the 'show typical values' button to compare letter frequencies in this document with letter frequencies typically found in modern English. (<em>Note.</em> For short documents, divergence from typical frequencies should not be regarded as statistically significant.)</p>
+			</div>
+			<div class="btn-group">
+				<button class="btn disabled">Show typical values: </button>
+				<button class="btn btn-info" id="letterFrequenciesDisplayer" data-toggle="popover" data-content="Show letter frequencies typically found in modern English."><i class="icon-align-left icon-white"></i></button>
+			</div>
+			<div id="letterFrequenciesContainer"></div>
+
+			<div id="letterDetails" class="popup">
+				<h2></h2>
+				<div>
+					<div>Frequency in this document: <span id="letterDetailsFq"></span>%</div>
+					<div>Typical frequency in modern English: <span id="letterDetailsTypical"></span>%</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Tinker</h2>
+			<div class="commentary">
+				<p>Try making some changes to the text, then click <strong>Update</strong>. Or go to <a href="{% url 'tm:submission_form' %}">Experiment</a> to start again with a new piece of text.</p>
+			</div>
+			{% include "tm/includes/submissionform.html" with author=author title=title year=year text=text submit_wording='Update' mode='submit' %}
+		</div>
+	</div>
+
+
+	{% if include_save %}
+		<div class="row-fluid">
+			<div class="span12 well">
+				<h2>Save</h2>
+				<div class="commentary">
+					<p>Clicking the <strong>Save</strong> button stores your text, and generates a URL which you can use to revisit this page or share with others.</p>
+				</div>
+				{% include "tm/includes/submissionform.html" with author=author title=title year=year text=text submit_wording='Save' mode='save' %}
+			</div>
+		</div>
+	{%  endif %}
+
+
+
+	<div id="sectionsTocContainer">
+		<div id="sectionsToc">
+			<ul class="nav nav-list">
+				Jump to:
+			</ul>
+		</div>
+		<div id="sectionsTocShort">
+			<ul class="nav nav-list">
+				<i class="icon-chevron-right"></i>
+			</ul>
+		</div>
+	</div>
+
+
+
+	<!--
+	================================================
+	Pop-ups, modals, etc.
+	================================================
+	-->
+
+	<!-- Pop-up displaying lemma details -->
+	<div id="lemmaDetails" class="popup">
+		<div>
+			<h2 style="float: left"><a class="a-oed" href="#" target="ext"><lem></lem></a></h2>
+			<span style="float: right"><i class="icon-remove icon-white lemmaDetailsCloser" style="cursor: pointer"></i></span>
+		</div>
+		<div class="clearfix"></div>
+		<div>
+			<p><em><defn></defn></em></p>
+			<p>Used <count></count> in this document <eqfq></eqfq>.</p>
+			<p>Frequency in modern English: <fq></fq> per million tokens</p>
+			<p>First recorded use: <yr></yr></p>
+			<p>Etymological origin: <lang></lang></p>
+			<p><a class="a-oed" href="#" target="ext">OED entry &raquo;</a></p>
+			<p><a class="a-ngram" href="#" target="ext">Google Ngram Viewer &raquo;</a></p>
+		</div>
+		<hr/>
+		<div>
+			Frequency data is derived from the 1970-2010 slice<br/>
+			of the <a href="https://books.google.com/ngrams" target="ext">Google Books Ngrams</a> data set. Based on this,<br/>
+			you can expect to come across &lsquo;<lem></lem>&rsquo; about<br/>
+			once every <invfq></invfq> words in modern English.
+		</div>
+		<hr/>
+		<button class="btn lemmaDetailsCloser"><i class="icon-remove"></i> close</button>
+	</div>
+
+
+	<!-- Pop-up displaying thesaurus class -->
+	<div id="thesaurusDetails" class="popup">
+		<div>
+			<h2 style="float: left" id="thesaurusDetailsTitle"></h2>
+			<span style="float: right"><i class="icon-remove icon-white thesaurusDetailsCloser" style="cursor: pointer"></i></span>
+		</div>
+		<div class="clearfix"></div>
+		<hr/>
+		<h3><a href="#" id="thesaurusDetailsBreadcrumb" target="ext"></a></h3>
+		<div id="thesaurusDetailsInstanceContainer"></div>
+		<hr/>
+		<button class="btn thesaurusDetailsCloser"><i class="icon-remove"></i> close</button>
+	</div>
+
+
+	<!-- Modal displaying the URL (only used after saving a user's text -->
+	<div id="urlModal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3>Content saved</h3>
+		</div>
+		<div class="modal-body">
+			<p>Your content has been saved. To retrieve this page in the future, use the URL below:</p>
+			<p id="urlContainer"></p>
+		</div>
+		<div class="modal-footer">
+			<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+		</div>
+	</div>
+{% endblock %}
+
+
+{% block hidden_elements %}
+	<div id="documentYear">{{ year }}</div>
+	<div id="definitionUrl">{% url 'tm:definition' id='' %}</div>
+	<div id="thesaurusUrl">{% url 'tm:thesaurus' idstring='' %}</div>
+{% endblock %}
+
+
+{% block additional_scripts %}
+<script type="text/javascript">
+	var lemmajson = JSON.parse('{{ jsonlemmas|safe }}');
+	var tokenjson = JSON.parse('{{ jsontokens|safe }}');
+</script>
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="{% static 'tm/js/viewresults.js' %}"></script>
+{% endblock %}

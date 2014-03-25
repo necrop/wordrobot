@@ -1,0 +1,23 @@
+{% extends "tm/base.html" %}
+
+{% block page_title %}
+experiment
+{% endblock %}
+
+{% block pagecontent %}
+	<div class="hero-unit subhero">
+		<h2>Experiment</h2>
+	</div>
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<p>Type some text of your own into the box below. Or paste a passage from a book, poem, etc.</p>
+			<p>Can't think of anything? <a href="{% url 'tm:list_canned' %}">Browse the library</a> of passages we've already collected.</p>
+
+			{% include "tm/includes/submissionform.html" with author='' title='' year='' text='' submit_wording='View results' mode='submit' %}
+		</div>
+	</div>
+
+
+{% endblock %}
+

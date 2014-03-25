@@ -1,0 +1,44 @@
+{% load staticfiles %}
+
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>{% block pagetitle %}{% endblock %} | wordrobot.com</title>
+		<link href="{% static 'common/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'root/css/root.css' %}" rel="stylesheet">
+		{% block extralinks %}
+		{% endblock %}
+		<!--[if lt IE 9]>
+			<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+	</head>
+	<body>
+		<img class="bg" src="{% static 'root/assets/steamdrill.jpg' %}">
+
+		<div class="contentContainer">
+			<h1>&gt;&thinsp;{% block bannertext %}wordrobot.com{% endblock %}<span id="cursor">_</span></h1>
+			{% block page_content %}
+			{% endblock %}
+		</div>
+
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="{% static 'common/bootstrap/js/bootstrap.min.js' %}"></script>
+		<script>
+			$(document).ready( function() {
+				$('#cursor').each(function() {
+					var elem = $(this);
+					setInterval(function() {
+						if (elem.css('visibility') == 'hidden') {
+							elem.css('visibility', 'visible');
+						} else {
+							elem.css('visibility', 'hidden');
+						}
+					}, 700);
+				});
+			});
+		</script>
+		{% block additional_scripts %}
+		{% endblock %}
+	</body>
+</html>

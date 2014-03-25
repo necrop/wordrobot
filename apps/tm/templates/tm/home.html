@@ -1,0 +1,56 @@
+{% extends "tm/base.html" %}
+{% load staticfiles %}
+
+{% block extralinks %}
+<link href="{% static 'tm/css/homestyle.css' %}" rel="stylesheet">
+{% endblock %}
+
+
+
+{% block page_title %}
+home
+{% endblock %}
+
+{% block pagecontent %}
+
+	<div class="hero-unit subhero" id="homepageHeader">
+		<h1>Text metrics</h1>
+		<p>Using the OED to explore speech and writing</p>
+	</div>
+	<div class="hero-unit subhero" id="imagestrip">
+		<h1>&nbsp;</h1>
+	</div>
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<p>Text Metrics uses data from <a href="http://www.oed.com" target="ext">OED</a> and <a href="https://books.google.com/ngrams/info" target="ext">Google Ngrams</a> to measure lexical features of texts. Features analysed include the frequency, age, and derivation of words.</p>
+			<p>Here's a selection of extracts to try. Click on a title to get started:</p>
+			<table id="documentsTable" class="table table-bordered table-condensed sortable">
+				<tbody>
+					{% for doc in randomdocs %}
+						<tr>
+							<td>{{ doc.author }}</td>
+							<td><a href="{{ doc.get_absolute_url }}"><em>{{ doc.title }}</em></a></td>
+							<td>&lsquo;{{ doc.teaser }}...<a href="{{ doc.get_absolute_url }}">&raquo;</a></a>&rsquo;</td>
+							<td>{{ doc.year }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			<p>See the full library of extracts <a href="{% url 'tm:list_canned' %}">here</a>, or take <a href="{% url 'tm:random_document' %}">potluck</a>. Or experiment with some text of your own, using the form below.</p>
+		</div>
+	</div>
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Do it yourself</h2>
+			<p>Type some text of your own into the box below. Or paste a passage from a book, poem, newspaper article, etc. For best results, find a passage about 300-500 words long; <a href="http://www.gutenberg.org/" target="ext">Project Gutenburg</a> and <a href="http://en.wikisource.org/wiki/Main_Page" target="ext">Wikisource</a> are good places to look.</p>
+
+			{% include "tm/includes/submissionform.html" with author='' title='' year='' text='' submit_wording='View results' mode='submit' %}
+		</div>
+	</div>
+
+
+{% endblock %}
+

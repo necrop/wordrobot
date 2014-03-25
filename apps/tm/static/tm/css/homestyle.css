@@ -1,0 +1,14 @@
+
+
+#homepageHeader {
+	margin-bottom: 0px;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+#imagestrip {
+	background: url('/static/tm/assets/mosaic.png');
+	margin-top: 0px;
+	border: 2px solid #028482;
+}
+

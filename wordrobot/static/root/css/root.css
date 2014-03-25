@@ -1,0 +1,29 @@
+body {
+	background-color: white ;
+	color: black;
+}
+
+img.bg {
+	height: 100%;
+	width: auto;
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: -2;
+}
+
+.contentContainer {
+	margin: 50px;
+}
+
+h1 {
+	font-family: 'Courier New';
+	color: darkgreen;
+	/*position: fixed;*/
+	/*left: 20px;*/
+	/*top: 100px;*/
+	/*top: 100px;*/
+	/*bottom: 10%;*/
+	font-size: 70px;
+	margin-bottom: 0.5em;
+}

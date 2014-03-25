@@ -1,0 +1,45 @@
+{% extends "tm/base.html" %}
+{% load staticfiles %}
+
+
+{% block page_title %}
+	Library of selected extracts
+{% endblock %}
+
+
+{% block pagecontent %}
+	<div class="hero-unit subhero">
+		<h2>
+			Library of selected extracts
+		</h2>
+	</div>
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<p>Click a title to see results. Click column headers to sort the table; click again to reverse.</p>
+			<table id="documentsTable" class="table table-bordered table-condensed sortable">
+				<thead>
+					<tr>
+						<th sort="author"><i class="icon-resize-vertical icon-white"></i>&nbsp;Author or source</th>
+						<th sort="title"><i class="icon-resize-vertical icon-white"></i>&nbsp;Title</th>
+						<th>&nbsp;</th>
+						<th sort="date"><i class="icon-resize-vertical icon-white"></i>&nbsp;Date</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+			<p>Many of the passages in the library are taken from texts in <a href="http://www.gutenberg.org/" target="ext">Project Gutenburg</a> or <a href="http://en.wikisource.org/wiki/Main_Page" target="ext">Wikisource</a>.
+		</div>
+	</div>
+{% endblock %}
+
+
+
+{% block additional_scripts %}
+<script type="text/javascript">
+	var documentjson = JSON.parse('{{ documents|safe }}');
+</script>
+<script src="{% static 'tm/js/listcanned.js' %}"></script>
+{% endblock %}

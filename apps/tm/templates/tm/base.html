@@ -1,0 +1,73 @@
+{% load staticfiles %}
+
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Text metrics: {% block page_title %}{% endblock %}</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<link href="{% static 'common/bootstrap/css/bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'common/bootstrap/css/bootstrap-responsive.css' %}" rel="stylesheet">
+		<link href="{% static 'tm/css/basestyle.css' %}" rel="stylesheet">
+		<link href="http://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.min.css" rel="stylesheet">
+		{% block extralinks %}
+		{% endblock %}
+
+		<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+		<!--[if lt IE 9]>
+			<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="navbar navbar-inverse navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="container">
+					<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="brand" href="{% url 'tm:home' %}">Text metrics</a></a>
+					<div class="nav-collapse collapse">
+						<ul class="nav">
+							<li><a href="{% url 'tm:home' %}">Home</a></li>
+							<li><a href="{% url 'tm:list_canned' %}">Library</a></li>
+							<li><a href="{% url 'tm:random_document' %}">Potluck</a></li>
+							<li><a href="{% url 'tm:submission_form' %}">Experiment</a></li>
+							<li><a href="{% url 'tm:info' page='help' %}">Help</a></li>
+						</ul>
+					</div><!--/.nav-collapse -->
+				</div>
+			</div>
+		</div>
+
+		<div class="container" id="pageTop">
+			{% block pagecontent %}
+			{% endblock %}
+			<hr/>
+			<footer>
+				<p>wordrobot.com</p>
+			</footer>
+		</div> <!-- /container -->
+
+
+		<div class="hidden">
+			{% comment %}Hidden_elements: HTML for modals, etc., goes here{% endcomment %}
+			{% block hidden_elements %}
+			{% endblock %}
+		</div>
+
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
+		<script src="{% static 'common/bootstrap/js/bootstrap.min.js' %}"></script>
+		<script src="{% static 'tm/js/common.js' %}"></script>
+		<script src="{% static 'tm/js/submissionform.js' %}"></script>
+		{% block additional_scripts %}
+		{% endblock %}
+	</body>
+</html>

@@ -1,0 +1,56 @@
+body {
+	padding-top: 60px;
+	padding-bottom: 40px;
+}
+td select {
+	line-height: 1;
+}
+
+.navbar-inverse .navbar-inner {
+	background-color: #003399;
+	background-image: none;
+}
+
+
+.hero-unit {
+	background-color: #028482;
+	/*background-color: #FCD271;*/
+	color: white;
+}
+
+.subhero {
+	padding-top: 20px;
+	padding-bottom: 20px;
+}
+
+
+.row-fluid > div {
+	background-color: #E6FFFF;
+}
+
+.hidden {
+	display: none;
+}
+
+
+
+/* sortable table */
+
+table.sortable {
+	border: 1px solid black;
+}
+
+table.sortable th {
+	background-color: black;
+	color: white;
+	padding-top: 1em;
+	padding-bottom: 1em;
+	cursor: pointer;
+}
+table.sortable th.highlighted {
+	background-color: #003366;
+}
+
+.hiddenInput {
+    display: none;
+}

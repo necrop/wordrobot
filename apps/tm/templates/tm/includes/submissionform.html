@@ -1,0 +1,45 @@
+<form id="submissionForm" class="form-horizontal" method="post"
+	{% if mode == 'submit' %}action="{% url 'tm:submit' %}"{% else %}action="{% url 'tm:save_text' %}"{% endif %}>
+	{% csrf_token %}
+	<fieldset>
+		<div class="control-group {% if mode == 'save' %}hiddenInput{% endif %}">
+			<label class="control-label">Author or source:</label>
+			<div class="controls">
+				<input class="input-large" type="text" name="author" value="{{ author }}"/>
+				{% include "tm/includes/helptooltip.html" with text="The author's name, if known. [Optional]" %}
+			</div>
+		</div>
+
+		<div class="control-group {% if mode == 'save' %}hiddenInput{% endif %}">
+			<label class="control-label">Title:</label>
+			<div class="controls">
+				<input class="input-xxlarge" type="text" name="title" value="{{ title }}"/>
+				{% include "tm/includes/helptooltip.html" with text="The title of the text, or the work from which the text is taken. [Optional]" %}
+			</div>
+		</div>
+
+		<div class="control-group {% if mode == 'save' %}hiddenInput{% endif %}">
+			<label class="control-label">{% include "tm/includes/requiredtooltip.html" %}Year:</label>
+			<div class="controls">
+				<input class="input-mini" type="number" min="1500" max="2014" name="year" value="{{ year }}"/>
+				{% include "tm/includes/helptooltip.html" with text="Enter a value between 1500 and 2014, indicating &mdash; roughly &mdash; when the text was written or published. (Or made up; use &lsquo;2014&rsquo; if you've just made it up.) This helps to parse the text more accurately, and gives better results." %}
+			</div>
+		</div>
+
+		<div class="control-group {% if mode == 'save' %}hiddenInput{% endif %}">
+			<label class="control-label">{% include "tm/includes/requiredtooltip.html" %}Text:</label>
+			<div class="controls">
+				<textarea class="span10" rows="20" name="text">{{ text }}</textarea>
+				<p>Maximum 500 words; submissions over 500 words will be truncated. Current length: <numWords></numWords> words.</p> 
+			</div>
+		</div>
+
+
+		<div class="control-group">
+			<div class="controls">
+				<button type="submit" class="btn btn-primary">{{ submit_wording }}</button>
+			</div>
+		</div>
+	</fieldset>
+</form>
+
