@@ -1,7 +1,8 @@
 
 import re
 
-from textblob.nltk.tokenize import word_tokenize, sent_tokenize
+#from textblob.nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 from .token import Token
 from .lemmacollection import LemmaCollection
 from .opencompounds import (check_for_open_bigram,
@@ -146,6 +147,11 @@ def _find_proper_names(tokens):
     for token in [t for t in tokens if t.proper_name is None
                   and t.lower() in common]:
         token.proper_name = False
+    # Tag names which match other names that have already been tagged
+    proper = set([t.token_verbatim for t in tokens if t.proper_name is True])
+    for token in [t for t in tokens if t.proper_name is None
+                  and t.token_verbatim in proper]:
+        token.proper_name = True
 
     for token in tokens:
         token.check_proper_name(method='neighbours')
@@ -154,9 +160,9 @@ def _find_proper_names(tokens):
         token.check_proper_name(method='midsentence')
 
     # Tag names which match other names that have already been tagged
-    proper = set([t.token for t in tokens if t.proper_name is True])
+    proper = set([t.token_verbatim for t in tokens if t.proper_name is True])
     for token in [t for t in tokens if t.proper_name is None
-                  and t.token in proper]:
+                  and t.token_verbatim in proper]:
         token.proper_name = True
 
     for token in tokens:
@@ -164,5 +170,7 @@ def _find_proper_names(tokens):
 
     # Remove any lemma reference from tokens which have been identified as
     #  proper names
-    [t.nix_lemma() for t in tokens if t.proper_name is True]
+    for token in [t for t in tokens if t.proper_name is True]:
+        token.nix_lemma()
+        token.token = token.token_verbatim
     return tokens

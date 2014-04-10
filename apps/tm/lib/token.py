@@ -126,6 +126,18 @@ class Token(object):
         except AttributeError:
             return None
 
+    def next_token_verbatim(self):
+        try:
+            return self.next.token_verbatim
+        except AttributeError:
+            return None
+
+    def previous_token_verbatim(self):
+        try:
+            return self.previous.token_verbatim
+        except AttributeError:
+            return None
+
     def check_proper_name(self, method=None):
         if self.proper_name is not None:
             return
@@ -142,30 +154,31 @@ class Token(object):
                 self.proper_name = False
             elif self.lower() in CALENDAR:
                 self.proper_name = False
-            elif self.lower() == 'I':
+            elif self.token == 'I':
                 self.proper_name = False
             elif self.follows_indefinite_article():
                 self.proper_name = False
             elif not self.lemma_manager():
                 self.proper_name = True
 
-        elif (method == 'neighbours' and self.is_capitalized() and
-                  not self.starts_sentence()):
+        elif (method == 'neighbours' and
+                self.is_capitalized() and
+                not self.starts_sentence()):
             if (self.previous and
-                self.previous.is_capitalized() and
-                not self.previous.starts_sentence() and
-                self.previous.proper_name is not False):
+                    self.previous.is_capitalized() and
+                    not self.previous.starts_sentence() and
+                    self.previous.proper_name is not False):
                 self.proper_name = True
                 self.previous.proper_name = True
             elif (self.next and
-                  self.next.is_capitalized() and
-                  self.next.proper_name is not False):
+                    self.next.is_capitalized() and
+                    self.next.proper_name is not False):
                 self.proper_name = True
                 self.next.proper_name = True
 
         elif method == 'unambiguous':
             qset = ProperName.objects.filter(sort=self.lexical_sort(),
-                                             lemma=self.token)
+                                             lemma=self.token_verbatim)
             if qset.exists() and qset.first().common:
                 self.proper_name = True
             elif not qset.exists():

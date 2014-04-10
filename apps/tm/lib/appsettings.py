@@ -27,7 +27,7 @@ INDEFINITE_ARTICLES = {'a', 'an', 'some', 'these', 'those'}
 
 INFLECTIONS = {}
 for lemma, inflist in [
-    ('be', "be, is, am, are, were, was, being, been, 'm, 're, wast, wert, 'twas"),
+    ('be', "be, is, am, are, were, was, being, been, 'm, 're, wast, wert, 'twas, wos, woz"),
     ('do', 'do, does, did, doing, dost, doth, didst'),
     ('have', "have, has, had, having, hast, hath, hadst, 've, 'd"),
     ('go', 'go, going, gone, goes, went, goest, goeth'),
@@ -36,6 +36,7 @@ for lemma, inflist in [
     ('run', 'run, runs, ran, running'),
     ('put', 'put, puts, putting'),
     ('eat', 'eat, eats, ate, eating'),
+    ('say', 'say, said, says, saying, ses, sez'),
     ("not", "not, n't"),
     ('a', 'a, an'),
     ('may', 'may, might, mightst'),
@@ -70,7 +71,8 @@ PROPER_NAME_ENDS = {'Island', 'Islands', 'Sea', 'Ocean', 'Mountain',
 PROPER_NAME_TITLES = {'Mr', 'Mr.', 'Mrs', 'Mrs.', 'Miss', 'Ms.', 'Sir',
                       'Lord', 'Lady', 'Captain', 'Capt.', 'Sergeant',
                       'Lieutenant', 'Lieut.', 'Pt.', 'Bp.', 'Abp.',
-                      'Revd.', 'Saint', 'St.', 'St', 'Santa'}
+                      'Revd.', 'Saint', 'St.', 'St', 'Santa', 'Prince',
+                      'Princess', 'King', 'Queen',}
 
 CLOSING_PUNCTUATION = {',', ';', ':', '.', ')', ']', '!',
                        '?', '\u201d', '/'}

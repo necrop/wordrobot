@@ -3,7 +3,7 @@ from collections import defaultdict
 from django.core.management.base import BaseCommand
 import numpy
 
-from .apps.tm.build.canned.cannedloader import CannedLoader
+from apps.tm.build.canned.cannedloader import CannedLoader
 from apps.tm.lib.textmanager import TextManager
 
 
