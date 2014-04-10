@@ -111,7 +111,9 @@ def compile_iteration(in_dir, out_dir, **kwargs):
 
 
 def _is_not_usable(instance):
-    if ' or ' in instance.lemma():
+    if not instance.lemma().strip():
+        return True
+    elif ' or ' in instance.lemma():
         return True
     elif '\u2014' in instance.lemma():
         return True
@@ -214,6 +216,13 @@ def _label_viable_for_rollup(thesclass, parentclass, grandparentclass):
 
 
 def _aligned_lemmas(thesclass, parentclass):
+    """
+    Test if lemmas in the child class look similar to those
+    in the parent class; if so, it's probably okay to roll the child
+    class up to the parent class
+
+    Returns True (lemmas are aligned) or False (lemmas are not aligned)
+    """
     response = False
     if thesclass.wordclass(penn=True) in ('NN', 'JJ'):
         parent_lemmas = set()
@@ -221,7 +230,7 @@ def _aligned_lemmas(thesclass, parentclass):
         for instance in parentclass.instances():
             lemma = instance.lemma().replace('-', ' ').strip()
             words = lemma.split()
-            if len(words) <= 2:
+            if words and len(words) <= 2:
                 keywords.add(words[-1])
             parent_lemmas.add(instance.lemma())
         for instance in [i for i in thesclass.instances()

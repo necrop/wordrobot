@@ -20,6 +20,7 @@ BarebonesResponse = namedtuple('BarebonesResponse',
 def lemma_lookup(token, sort, year, **kwargs):
     plural_check = kwargs.get('plural_check', True)
     strict = kwargs.get('strict', False)
+    sentence_start = kwargs.get('sentence_start', False)
     token_low = token.lower()
 
     target_lemma = INFLECTIONS.get(token_low, None)
@@ -46,7 +47,6 @@ def lemma_lookup(token, sort, year, **kwargs):
         return response
 
     else:
-        antedating_margin = _set_antedating_margin(year)
         qset = _cached_wordform_lookup(sort)
 
         # If no results...
@@ -54,9 +54,9 @@ def lemma_lookup(token, sort, year, **kwargs):
             # If the token looks like it might be a plural
             #  (i.e. ends with 's'), try again with singular equivalent.
             if (plural_check and
-                len(sort) >= 5 and
-                sort.endswith('s') and
-                not sort.endswith('ss')):
+                    len(sort) >= 5 and
+                    sort.endswith('s') and
+                    not sort.endswith('ss')):
                 sort_singular = sort.rstrip('s')
                 qset = _cached_wordform_lookup(sort_singular)
 
@@ -137,21 +137,31 @@ def lemma_lookup(token, sort, year, **kwargs):
                 if qset.exists():
                     token += 'g'
 
-        if not qset.exists():
-            response = []
-        elif qset.count() == 1:
-            qset = qset.filter(lemma__firstyear__lt=antedating_margin)
-            response = list(qset)
-        elif qset.count() > 1:
+        response = _refine_candidates(qset, token, year, sentence_start)
+        return response
+
+
+def _refine_candidates(qset, token, year, sentence_start):
+    """
+    Ditch any candidates from the query set that don't seem
+    viable; return the rest as a list.
+    """
+    antedating_margin = _set_antedating_margin(year)
+
+    if not qset.exists():
+        response = []
+    else:
+        qset = qset.filter(lemma__firstyear__lt=antedating_margin)
+        # Pick the wordform(s) that give the best match to the token
+        #   (capitalization, diacritics, etc.)
+        # But don't be too picky if this is at the start of the
+        #   sentence, since capitalization may be misleading
+        response = list(qset)
+        if qset.count() > 1 and not sentence_start:
             qset2 = qset.filter(wordform=token)
             if qset2:
-                qset = qset2
-            qset = qset.filter(lemma__firstyear__lt=antedating_margin)
-            response = list(qset)
-        else:
-            response = []
-
-        return response
+                response = list(qset2)
+    return response
 
 
 @lru_cache(maxsize=512)

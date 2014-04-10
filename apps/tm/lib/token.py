@@ -108,8 +108,8 @@ class Token(object):
         if self.first:
             return True
         elif (self.previous and
-                  self.previous.first and
-                  not self.previous.is_wordlike()):
+                self.previous.first and
+                not self.previous.is_wordlike()):
             return True
         else:
             return False
@@ -276,9 +276,12 @@ class Token(object):
             try:
                 Token.lemma_cache[self.lower()]
             except KeyError:
-                Token.lemma_cache[self.lower()] = lemma_lookup(self.token,
-                                                               self.lexical_sort(),
-                                                               self.docyear)
+                qset = lemma_lookup(self.token,
+                                    self.lexical_sort(),
+                                    self.docyear,
+                                    sentence_start=self.starts_sentence())
+                Token.lemma_cache[self.lower()] = qset
+
             candidates = Token.lemma_cache[self.lower()]
             if len(candidates) == 1:
                 self._lemma_manager = candidates[0].lemma

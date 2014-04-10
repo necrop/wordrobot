@@ -16,6 +16,9 @@ def store_taxonomy():
     ThesaurusClass.objects.all().delete()
 
     ci = ContentIterator(in_dir=IN_DIR, fixLigatures=True, verbosity='low')
+    for thesclass in ci.iterate():
+        if thesclass.id() == 1630 or thesclass.parent() == 1630:
+            print(thesclass.id(), thesclass.label(), thesclass.wordclass(penn=True))
     valid_ids = {thesclass.id(): thesclass.size()
                  for thesclass in ci.iterate()}
 
