@@ -9,7 +9,7 @@ from .opencompounds import (check_for_open_bigram,
                             check_for_open_trigram,
                             check_for_hyphen_trigram,
                             check_for_hyphen_5gram)
-from .utilities import apostrophe_masker
+from .utilities import apostrophe_masker, stop_masker, stop_unmasker
 
 
 # We need to space these out, because the tokenizer does not do so
@@ -35,6 +35,7 @@ def tokenizer(text, year):
 
     lines = [l.strip() for l in text.split('\n') if l.strip()]
     lines = [apostrophe_masker(l, year) for l in lines]
+    lines = [stop_masker(l) for l in lines]
 
     #-----------------------------------------------
     # Tokenization and lemmatization
@@ -44,9 +45,10 @@ def tokenizer(text, year):
         sentences = sent_tokenize(line)
         line_tokens = []
         for sentence in sentences:
+            sentence = stop_unmasker(sentence)
             # Tokenize this sentence
             sentence = re.sub(r'([:,])$', r' \1', sentence)
-            sentence_tokens = [Token(w, year) for w in
+            sentence_tokens = [Token(w, year, sentence) for w in
                                word_tokenize(sentence)]
             # Identify lemmas for each token (where possible)
             sentence_tokens = _identify_lemmas(sentence_tokens)
@@ -109,6 +111,19 @@ def _identify_lemmas(tokens):
         check_for_open_trigram(token)
         check_for_open_bigram(token)
     tokens = _drop_discarded_tokens(tokens)
+
+    #------------------------------------------------
+    # Outstanding pos-checking for compounds
+    #  (This had to wait till we'd done housekeeping on previous/next tokens)
+    #------------------------------------------------
+    for token in tokens:
+        try:
+            token.compound_candidates
+        except AttributeError:
+            pass
+        else:
+            winner = token.pick_candidate_by_pos(token.compound_candidates)
+            token.reset_lemma(winner.lemma)
 
     return tokens
 

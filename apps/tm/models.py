@@ -133,6 +133,14 @@ class Wordform(models.Model):
     class Meta:
         ordering = ['-frequency', ]
 
+    def __repr__(self):
+        if self.frequency:
+            return '<Wordform: %s/%s (f=%f)>' % (self.wordform,
+                                                 self.wordclass,
+                                                 self.frequency)
+        else:
+            return '<Wordform: %s/%s>' % (self.wordform, self.wordclass)
+
 
 class ProperName(models.Model):
 

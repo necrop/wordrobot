@@ -18,8 +18,8 @@ def check_for_open_bigram(token):
         return False
 
     hypothesis = token.token + ' ' + token.next_token()
-    compound_lemma = _compound_lookup(hypothesis, token.docyear, strict=True)
-    if not compound_lemma:
+    results = _compound_lookup(hypothesis, token.docyear, strict=True)
+    if not results:
         return False
 
     # We require an exact match in order for this hypothesis
@@ -27,6 +27,7 @@ def check_for_open_bigram(token):
     #  sentence, in which case we allow capitalization.
     # We also allow for regular pluralization.
     allowed = False
+    compound_lemma = results[0].lemma
     if compound_lemma.wordclass not in ('NN', 'NNS', 'NP', 'JJ', 'RB'):
         pass
     elif (compound_lemma.lemma == hypothesis or
@@ -44,7 +45,7 @@ def check_for_open_bigram(token):
     if allowed:
         token.token = hypothesis
         token.token_verbatim += ' ' + token.next.token_verbatim
-        token.reset_lemma(compound_lemma)
+        _update_lemma(token, results)
         token.omit_next()
         return True
     else:
@@ -57,15 +58,15 @@ def check_for_open_trigram(token):
 
     hypothesis = (token.previous_token() + ' ' + token.token + ' '
                   + token.next_token())
-    compound_lemma = _compound_lookup(hypothesis, token.docyear, strict=True)
-    if not compound_lemma:
+    results = _compound_lookup(hypothesis, token.docyear, strict=True)
+    if not results:
         return False
 
     token.token = hypothesis
     token.token_verbatim = (token.previous.token_verbatim + ' ' +
                             token.token_verbatim + ' ' +
                             token.next.token_verbatim)
-    token.reset_lemma(compound_lemma)
+    _update_lemma(token, results)
     token.omit_previous()
     token.omit_next()
     return True
@@ -76,14 +77,14 @@ def check_for_hyphen_trigram(token):
         return False
 
     hypothesis = (token.previous_token() + '-' + token.next_token())
-    compound_lemma = _compound_lookup(hypothesis, token.docyear, strict=False)
-    if not compound_lemma:
+    results = _compound_lookup(hypothesis, token.docyear, strict=False)
+    if not results:
         return False
 
     token.token = hypothesis
     token.token_verbatim = (token.previous.token_verbatim + '-' +
                             token.next.token_verbatim)
-    token.reset_lemma(compound_lemma)
+    _update_lemma(token, results)
     token.omit_previous()
     token.omit_next()
     return True
@@ -95,15 +96,15 @@ def check_for_hyphen_5gram(token):
 
     hypothesis = (token.previous.previous_token() + '-' + token.token +
                   '-' + token.next.next_token())
-    compound_lemma = _compound_lookup(hypothesis, token.docyear, strict=False)
-    if not compound_lemma:
+    results = _compound_lookup(hypothesis, token.docyear, strict=False)
+    if not results:
         return False
 
     token.token = hypothesis
     token.token_verbatim = (token.previous.previous.token_verbatim + '-' +
                             token.token_verbatim + '-' +
                             token.next.next.token_verbatim)
-    token.reset_lemma(compound_lemma)
+    _update_lemma(token, results)
     token.previous.omit_previous()
     token.next.omit_next()
     token.omit_previous()
@@ -196,7 +197,6 @@ def _plausible_hyphen_trigram(token):
     return True
 
 
-
 def _plausible_hyphen_5gram(token):
     """
     Return True if the previous and following tokens could plausibly
@@ -220,7 +220,21 @@ def _compound_lookup(hypothesis, year, strict=True):
                               lexicalsort(hypothesis),
                               year,
                               strict=strict)
-    if not candidates:
-        return None
-    else:
-        return candidates[0].lemma
+    return candidates
+
+
+def _update_lemma(token, results):
+    """
+    Update the lemma for this token with the new compound lemma
+    """
+    # In the case of multiple candidates, we can't pos-test the candidates
+    #  yet, until the previous/next tokens in the sentence have been updated
+    #  (joining together multiple tokens into a single compound will have
+    #  changed what should be regarded as the previous and next tokens).
+    #  So for now we just pick the first candidate (which should be the
+    #  highest-frequency one); but we store the others as a new
+    #  'compound_candidates' attribute, which can be used for pos-testing
+    #  later on.
+    token.reset_lemma(results[0].lemma)
+    if len(results) > 1:
+        token.compound_candidates = results

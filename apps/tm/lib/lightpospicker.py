@@ -4,23 +4,25 @@ picks the one whose part of speech seems to be the best match for the
 context - or failing that, the one with the highest frequency.
 """
 
-ARTICLES = set(('the', 'a', 'an', 'his', 'her', 'my', 'their',
-                'your', 'our', 'its', 'any',))
-PRONOUNS = set(('i', 'you', 'we', 'they'))
-PRONOUNS3 = set(('he', 'she', 'it'))
-SUBJECTS = set(('him', 'her', 'it', 'us', 'them'))
-AUXILIARIES = set(('is', 'was', 'were', 'are', 'be', 'been'))
-AUXILIARIES2 = set(('have', 'has', 'had', 'having'))
-PREPOSITIONS = set(('in', 'on', 'with', 'at', 'through', 'into', 'onto',
-                    'upon', 'along', 'without', 'beside'))
-ADJ_QUALIFIERS = set(('very', 'really', 'quite', 'is', 'was', 'are', 'were', 'too'))
-SENTENCE_ENDS = set(('.', ':', ';', '!', '?'))
-MODALS = set(('can', 'will', 'shall', 'would', 'should', 'could', "'d",
-              "'ll", 'not', "'n't"))
+ARTICLES = {'the', 'a', 'an', 'his', 'her', 'my', 'their',
+            'your', 'our', 'its', 'any'}
+PRONOUNS = {'i', 'you', 'we', 'they'}
+PRONOUNS3 = {'he', 'she', 'it'}
+OBJECTS = {'me', 'him', 'her', 'it', 'us', 'them', 'himself',
+           'herself', 'itself', 'myself', 'ourselves', 'themselves',
+           'yourself', 'yourselves'}
+AUXILIARIES = {'is', 'was', 'were', 'are', 'be', 'been'}
+AUXILIARIES2 = {'have', 'has', 'had', 'having'}
+PREPOSITIONS = {'in', 'on', 'with', 'at', 'through', 'into', 'onto',
+                'upon', 'along', 'without', 'beside'}
+ADJ_QUALIFIERS = {'very', 'really', 'quite', 'is', 'was', 'are', 'were', 'too'}
+SENTENCE_ENDS = {'.', ':', ';', '!', '?'}
+MODALS = {'can', 'will', 'shall', 'would', 'should', 'could', "'d",
+          "'ll", 'not', "'n't"}
 
 
 def light_pos_picker(token, candidates):
-    #wordclasses = set([c.wordclass for c in candidates])
+    wordclasses = set([c.wordclass for c in candidates])
     if token.previous_token():
         previous_token = token.previous_token().lower()
     else:
@@ -38,11 +40,7 @@ def light_pos_picker(token, candidates):
 
         if c.wordclass in ('NN', 'NNS', 'JJ'):
             if (next_token in ARTICLES or next_token in PRONOUNS or
-                    next_token in PRONOUNS3 or next_token in SUBJECTS):
-                c.score -= 1
-
-        if c.wordclass in ('JJ',):
-            if next_token in PREPOSITIONS or next_token == "'s":
+                    next_token in PRONOUNS3 or next_token in OBJECTS):
                 c.score -= 1
 
         if c.wordclass in ('NN', 'NNS'):
@@ -57,8 +55,11 @@ def light_pos_picker(token, candidates):
             if next_token in ('are', 'were', 'have', 'had', 'did', 'do'):
                 c.score += 1
 
-        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBG'):
-            if next_token in ARTICLES or next_token in AUXILIARIES or next_token == "'s":
+        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBG', 'VBND'):
+            if (next_token in ARTICLES or
+                    next_token in AUXILIARIES or
+                    next_token in OBJECTS or
+                    next_token == "'s"):
                 c.score += 1
 
         if c.wordclass in ('VB',):
@@ -69,21 +70,19 @@ def light_pos_picker(token, candidates):
             if previous_token in PRONOUNS3:
                 c.score += 1
 
-        if c.wordclass in ('VBD',):
+        if c.wordclass in ('VBD', 'VBND'):
             if previous_token in PRONOUNS or previous_token in PRONOUNS3:
                 c.score += 1
 
-        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBG'):
-            if next_token in SUBJECTS:
-                c.score += 1
-
-        if c.wordclass in ('VBN', 'VBG'):
+        if c.wordclass in ('VBN', 'VBG', 'VBND'):
             if previous_token in AUXILIARIES:
                 c.score += 1
 
-        if c.wordclass in ('VBN',):
+        if c.wordclass in ('VBN', 'VBND'):
             if previous_token in AUXILIARIES2:
                 c.score += 1
+            if next_token == 'by':
+                c.score += 0.5
 
         if c.wordclass in ('VB',):
             if previous_token == 'to' and next_token not in SENTENCE_ENDS:
@@ -93,7 +92,7 @@ def light_pos_picker(token, candidates):
             if previous_token in MODALS:
                 c.score += 0.5
 
-        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN'):
+        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBND'):
             if previous_token in PREPOSITIONS:
                 c.score -= 1
 
@@ -106,6 +105,12 @@ def light_pos_picker(token, candidates):
                 c.score += 1
 
         if c.wordclass in ('JJ',):
+            if next_token in PREPOSITIONS or next_token == "'s":
+                c.score -= 1
+            if (next_token == 'by' and
+                    ('VBN' in wordclasses or 'VBND' in wordclasses)):
+                c.score -= 1
+
             if previous_token in ADJ_QUALIFIERS:
                 c.score += 1
             elif previous_token.endswith('ly'):
@@ -113,7 +118,7 @@ def light_pos_picker(token, candidates):
             elif next_token in SENTENCE_ENDS:
                 c.score -= 1
 
-        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN',):
+        if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBND'):
             if next_token == '-':
                 c.score -= 1
 

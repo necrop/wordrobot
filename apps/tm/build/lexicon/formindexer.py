@@ -109,13 +109,22 @@ def _store_forms(block, entry, block_type, letter):
 
 
 def _add_types(morphset, target_set, letter):
+    # Check if (in the case of a verb) the VBN and VBD forms are the same;
+    # we'll flatten them to a single form if so
+    duplicate_pasts = False
+    pastforms = set([typeunit.form for typeunit in morphset.types()
+                     if typeunit.wordclass() in ('VBN', 'VBD')])
+    if len(pastforms) == 1:
+        duplicate_pasts = True
+
     typelist = []
     for typeunit in morphset.types():
-        if len(typeunit.sort) > MAX_WORDLENGTH or len(typeunit.form) > MAX_WORDLENGTH:
-            continue
-        if not typeunit.sort.startswith(letter):
-            continue
-        typelist.append(_compile_type_data(typeunit))
+        if (len(typeunit.sort) > MAX_WORDLENGTH or
+                len(typeunit.form) > MAX_WORDLENGTH or
+                not typeunit.sort.startswith(letter)):
+            pass
+        else:
+            typelist.append(_compile_type_data(typeunit, duplicate_pasts))
 
     # Deduplicate, keeping the version with the highest frequency (and adding
     #  the frequency score of the loser to that of the winner)
@@ -138,23 +147,30 @@ def _add_alien_variants(morphset, target_set, letter):
     letter (e.g. 'cimiter' under 'scimitar').
     """
     for typeunit in morphset.types():
-        if len(typeunit.sort) > MAX_WORDLENGTH or len(typeunit.form) > MAX_WORDLENGTH:
-            continue
-        if typeunit.sort.startswith(letter):
-            continue
-        target_set.add(_compile_type_data(typeunit))
+        if (len(typeunit.sort) > MAX_WORDLENGTH or
+                len(typeunit.form) > MAX_WORDLENGTH or
+                typeunit.sort.startswith(letter)):
+            pass
+        else:
+            target_set.add(_compile_type_data(typeunit, False))
 
 
-def _compile_type_data(t):
+def _compile_type_data(type_unit, duplicate_pasts):
     # For the purposes of filtering, we can treat some wordclasses
     #   as essentially interchangeable; so these get flattened to
     #   the 'wordclassflat' attribute, which is what gets used in the
     #   refine stage
-    wordclassflat = t.wordclass()
+    wordclass = type_unit.wordclass()
+    # If there's both a VBN and a VBD, and these are identical,
+    #  we flatten them to a hybrid VBND
+    if wordclass in ('VBN', 'VBD') and duplicate_pasts:
+        wordclass = 'VBND'
+    wordclassflat = wordclass
+
     if wordclassflat == 'NNS':
         wordclassflat = 'NN'
-    elif wordclassflat == 'VBD':
-        wordclassflat = 'VBN'
+    elif wordclassflat in ('VBD', 'VBN', 'VBND'):
+        wordclassflat = 'VBND'
     elif wordclassflat in ('RB', 'CC', 'IN', 'PP'):
         wordclassflat = 'JJ'
     elif wordclassflat == 'MD':
@@ -164,8 +180,8 @@ def _compile_type_data(t):
     elif wordclassflat in ('RB', 'RBR', 'RBS'):
         wordclassflat = 'JJ'
 
-    return TypeData(t.sort,
-                    t.form,
-                    t.wordclass(),
+    return TypeData(type_unit.sort,
+                    type_unit.form,
+                    wordclass,
                     wordclassflat,
-                    t.frequency())
+                    type_unit.frequency())

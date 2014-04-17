@@ -24,20 +24,21 @@ def lemma_lookup(token, sort, year, **kwargs):
     token_low = token.lower()
 
     target_lemma = INFLECTIONS.get(token_low, None)
-    if (target_lemma is None and
+    if (not target_lemma and
             (token_low in CORE_WORDS or
-            token_low in INDEFINITE_ARTICLES or
-            token_low in CALENDAR)):
+            token_low in INDEFINITE_ARTICLES)):
         target_lemma = token_low
+    if not target_lemma and token in CALENDAR:
+        target_lemma = token
 
-    if target_lemma is not None:
+    if target_lemma:
         # For hardcoded core wordforms, we shortcut the process of
         #   the wordform and then getting the lemma; we just get the lemma
-        #   directly/ This means we then have to fake a response with a skeleton
+        #   directly. This means we then have to fake a response with a skeleton
         #   wordform object containing the lemma.
         # Look up the lemma
         qset = _cached_lemma_lookup(target_lemma)
-        # The one we want will be the most most frequent lemma
+        # The one we want will be the most frequent lemma
         lemma = qset.order_by('-frequency').first()
         # Fake a barebones Wordform object containing the lemma. We give the
         #  wordform the same wordclass as the lemma; which won't always be
@@ -154,11 +155,13 @@ def _refine_candidates(qset, token, year, sentence_start):
         qset = qset.filter(lemma__firstyear__lt=antedating_margin)
         # Pick the wordform(s) that give the best match to the token
         #   (capitalization, diacritics, etc.)
-        # But don't be too picky if this is at the start of the
-        #   sentence, since capitalization may be misleading
+        # - But allow for case variation at the start of the sentence
         response = list(qset)
-        if qset.count() > 1 and not sentence_start:
-            qset2 = qset.filter(wordform=token)
+        if qset.count() > 1:
+            if sentence_start:
+                qset2 = qset.filter(wordform__iexact=token)
+            else:
+                qset2 = qset.filter(wordform=token)
             if qset2:
                 response = list(qset2)
     return response
@@ -166,7 +169,7 @@ def _refine_candidates(qset, token, year, sentence_start):
 
 @lru_cache(maxsize=512)
 def _cached_lemma_lookup(target):
-    return Lemma.objects.filter(sort=target)
+    return Lemma.objects.filter(lemma=target)
 
 
 @lru_cache(maxsize=512)

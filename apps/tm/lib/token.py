@@ -22,9 +22,10 @@ class Token(object):
 
     lemma_cache = {}
 
-    def __init__(self, token, year):
+    def __init__(self, token, year, sentence):
         self.token_verbatim = _token_cleanup(token)
         self.token = _token_adjusted(self.token_verbatim, year)
+        self.sentence = sentence
 
         self.docyear = year  # Year of the document this comes from
         self.first = False  # Is this the first token in its sentence?
@@ -207,6 +208,9 @@ class Token(object):
             self.token += 'na'
             self.token_verbatim += 'na'
             self.omit_next()
+        # d'ye -> do 'ye
+        if self.token in ('d', 'D') and self.next_token() in ("'ye", "'you"):
+            self.token = 'do'
 
     def omit_previous(self):
         """
@@ -251,6 +255,14 @@ class Token(object):
             self.find_lemma()
             return self._lemma_manager
 
+    def is_matched_to_lemma(self, lemma_record):
+        if self.lemma_manager() is None:
+            return False
+        elif int(self.lemma_manager().id) == int(lemma_record.id):
+            return True
+        else:
+            return False
+
     def reset_lemma(self, new_lemma_manager):
         self._lemma_manager = new_lemma_manager
 
@@ -284,18 +296,21 @@ class Token(object):
 
             candidates = Token.lemma_cache[self.lower()]
             if len(candidates) == 1:
-                self._lemma_manager = candidates[0].lemma
+                self.reset_lemma(candidates[0].lemma)
                 self.token = candidates[0].wordform
                 self.wordclass = candidates[0].wordclass
             elif len(candidates) > 1:
-                winner = light_pos_picker(self, candidates)
-                self._lemma_manager = winner.lemma
+                winner = self.pick_candidate_by_pos(candidates)
+                self.reset_lemma(winner.lemma)
                 self.token = winner.wordform
                 self.wordclass = winner.wordclass
             else:
-                self._lemma_manager = None
+                self.reset_lemma(None)
         else:
-            self._lemma_manager = None
+            self.reset_lemma(None)
+
+    def pick_candidate_by_pos(self, candidates):
+        return light_pos_picker(self, candidates)
 
     def space_before(self):
         if (self.token in CLOSING_PUNCTUATION or

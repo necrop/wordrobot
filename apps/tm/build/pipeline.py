@@ -59,8 +59,3 @@ def populate_lexicon_db():
 def prepare_canned_texts():
     from apps.tm.build.canned.preparecannedtexts import prepare_canned_texts
     prepare_canned_texts()
-
-
-def prepare_full_text_stats():
-    from apps.tm.build.canned.fulltextstats import full_text_stats
-    full_text_stats()

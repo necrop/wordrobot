@@ -12,12 +12,11 @@ PIPELINE = (
     ('make_leanht', 0),
     ('inflect_leanht', 0),
     ('populate_leanht_db', 0),
-    ('index_proper', 0),
-    ('index_forms', 0),
-    ('refine_forms', 0),
-    ('populate_lexicon_db', 0),
-    ('prepare_canned_texts', 0),
-    ('prepare_full_text_stats', 1)
+    ('index_proper', 1),
+    ('index_forms', 1),
+    ('refine_forms', 1),
+    ('populate_lexicon_db', 1),
+    ('prepare_canned_texts', 1),
 )
 
 
@@ -28,6 +27,7 @@ BASE_DIR = os.path.join(lexconfig.OED_DIR, 'projects', 'textmetrics')
 FORM_INDEX_DIR = os.path.join(BASE_DIR, 'form_index')
 LEANHT_DIR = os.path.join(BASE_DIR, 'leanht')
 
+EPONYMS_FILE = os.path.join(BASE_DIR, 'oed_eponyms.txt')
 
 ENTRY_MINIMUM_END_DATE = 1750
 VARIANT_MINIMUM_END_DATE = 1650

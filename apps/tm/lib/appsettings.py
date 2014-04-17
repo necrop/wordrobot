@@ -18,17 +18,17 @@ CORE_WORDS = {'the', 'of', 'and', 'to', 'a', 'in', 'for', 'is', 'on',
 CORE_VERBS = {'be', 'do', 'have', 'go', 'get', 'put', 'make', 'can',
               'shall', 'will', 'seem', 'come'}
 
-CALENDAR = {'monday', 'tuesday', 'wednesday', 'thursday', 'friday',
-            'saturday', 'sunday', 'january', 'february', 'march',
-            'april', 'may', 'june', 'july', 'august', 'september',
-            'october', 'november', 'december'}
+CALENDAR = {'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
+            'Saturday', 'Sunday', 'January', 'February', 'March',
+            'April', 'May', 'June', 'July', 'August', 'September',
+            'October', 'November', 'December'}
 
 INDEFINITE_ARTICLES = {'a', 'an', 'some', 'these', 'those'}
 
 INFLECTIONS = {}
 for lemma, inflist in [
     ('be', "be, is, am, are, were, was, being, been, 'm, 're, wast, wert, 'twas, wos, woz"),
-    ('do', 'do, does, did, doing, dost, doth, didst'),
+    ('do', "do, does, did, doing, dost, doth, didst, d'"),
     ('have', "have, has, had, having, hast, hath, hadst, 've, 'd"),
     ('go', 'go, going, gone, goes, went, goest, goeth'),
     ('get', 'get, gets, got, getting'),
@@ -72,7 +72,7 @@ PROPER_NAME_TITLES = {'Mr', 'Mr.', 'Mrs', 'Mrs.', 'Miss', 'Ms.', 'Sir',
                       'Lord', 'Lady', 'Captain', 'Capt.', 'Sergeant',
                       'Lieutenant', 'Lieut.', 'Pt.', 'Bp.', 'Abp.',
                       'Revd.', 'Saint', 'St.', 'St', 'Santa', 'Prince',
-                      'Princess', 'King', 'Queen',}
+                      'Princess', 'King', 'Queen'}
 
 CLOSING_PUNCTUATION = {',', ';', ':', '.', ')', ']', '!',
                        '?', '\u201d', '/'}
