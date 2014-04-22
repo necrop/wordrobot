@@ -239,10 +239,19 @@ def _discardable_homographs(homographs):
 
 
 def _evaluate_homographs(homographs):
+    """
+    Given a list of homographs (e.g. spells_NNS and spells_VBZ), decide
+    which of these are worth keeping.
+
+    Return a new list having omitted anything discardable (i.e. anything
+    that's very low frequency relative to the highest-frequency candidate)
+    """
     homographs.sort(key=lambda h: h[1].frequency, reverse=True)
     top_frequency = homographs[0][1].frequency
 
     # Drop any homographs that are way less frequent than the most frequent
+    #  (using a sliding scale dependant on the frequency of the
+    #  highest-frequency candidate)
     if top_frequency > 10:
         homographs = [h for h in homographs if
                       h[1].frequency >= top_frequency / 20]
@@ -252,12 +261,16 @@ def _evaluate_homographs(homographs):
     elif top_frequency > 0.1:
         homographs = [h for h in homographs if
                       h[1].frequency >= top_frequency / 5]
+    elif top_frequency > 0.01:
+        homographs = [h for h in homographs if
+                      h[1].frequency >= top_frequency / 2]
 
-    # If they're all low-frequency (< 0.1 per million), we just pick the
+    # If they're all low-frequency (< 0.01 per million), we just pick the
     #  most frequent of them - it's not worth worrying about these,
     #  and retaining various different homographs will just stuff the Db.
-    if len(homographs) == 1 or top_frequency <= 0.1:
+    if top_frequency <= 0.01:
         return [homographs[0], ]
+    # Otherwise, we retain at most three options
     else:
         #print('-----------------------------------------------------')
         #for index, h in homographs[0:3]:

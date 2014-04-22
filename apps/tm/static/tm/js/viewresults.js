@@ -1621,7 +1621,7 @@ function compileContinuousText(mode) {
 			text_html += ' ';
 		}
 
-		if (t.status === 'punc') {
+		if (t.status === 'punc' || t.status === 'exception') {
 			text_html += t.token;
 		} else if (mode === 'thesaurus') {
 			text_html += thesaurusSensitiveToken(t);
@@ -1647,8 +1647,12 @@ function lemmaSensitiveToken(t) {
 
 function thesaurusSensitiveToken(t) {
 	var node;
+	var wordclass = t.wordclass;
+	if (wordclass === 'VBND') {
+		wordclass = 'VBD';
+	}
 	if (t.status === 'oed' && lemmadata[t.lemma_index].thesaurusid > 0) {
-		node = '<span class="token-theslinked" classid="' + lemmadata[t.lemma_index].thesaurusid + '" wordclass="' + t.wordclass + '">';
+		node = '<span class="token-theslinked" classid="' + lemmadata[t.lemma_index].thesaurusid + '" wordclass="' + wordclass + '">';
 		node += '<span class="disp">' + t.token + '</span><span class="src">' + t.token + '</span>';
 		node += '</span>';
 	} else {

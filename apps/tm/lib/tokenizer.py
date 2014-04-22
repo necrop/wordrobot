@@ -1,7 +1,6 @@
 
 import re
 
-#from textblob.nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.tokenize import word_tokenize, sent_tokenize
 from .token import Token
 from .lemmacollection import LemmaCollection

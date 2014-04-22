@@ -14,6 +14,7 @@ WORDLIKE = local_settings.WORDLIKE
 PROPER_NAME_BIGRAMS = local_settings.PROPER_NAME_BIGRAMS
 PROPER_NAME_ENDS = local_settings.PROPER_NAME_ENDS
 PROPER_NAME_TITLES = local_settings.PROPER_NAME_TITLES
+PREFIXES = local_settings.PREFIXES
 CLOSING_PUNCTUATION = local_settings.CLOSING_PUNCTUATION
 UNSPACED = set(('(', '[', '\u201c', '/', '-')) # no space before these
 
@@ -105,6 +106,9 @@ class Token(object):
         else:
             return False
 
+    def is_prefix(self):
+        return self.lower() in PREFIXES and self.next_token() == '-'
+
     def starts_sentence(self):
         if self.first:
             return True
@@ -142,7 +146,9 @@ class Token(object):
     def check_proper_name(self, method=None):
         if self.proper_name is not None:
             return
-        elif not self.is_wordlike() or not self.is_capitalized():
+        elif (not self.is_wordlike() or
+                not self.is_capitalized() or
+                self.is_prefix()):
             self.proper_name = False
 
         elif not method or method == 'capitalization':
@@ -277,14 +283,15 @@ class Token(object):
 
     def is_missing_from_oed(self):
         if (self.is_wordlike() and
-            not self.proper_name and
-            not self.is_in_oed()):
+                not self.proper_name and
+                not self.is_prefix() and
+                not self.is_in_oed()):
             return True
         else:
             return False
 
     def find_lemma(self):
-        if self.is_wordlike():
+        if self.is_wordlike() and not self.is_prefix():
             try:
                 Token.lemma_cache[self.lower()]
             except KeyError:
@@ -328,6 +335,8 @@ class Token(object):
             _status = 'oed'
         elif self.proper_name:
             _status = 'proper'
+        elif self.is_prefix():
+            _status = 'exception'
         elif self.is_wordlike():
             _status = 'missing'
         else:
@@ -343,7 +352,7 @@ class Token(object):
             space_before = 0
         return [json_safe(self.token_verbatim),
                 self.status(),
-                space_before,]
+                space_before, ]
 
     #=============================================================
     # The following functions are not strictly needed by the

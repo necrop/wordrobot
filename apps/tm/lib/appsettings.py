@@ -50,20 +50,28 @@ for lemma, inflist in [
     for inflection in [i.strip() for i in inflist.split(',')]:
         INFLECTIONS[inflection] = lemma
 
+# These won't be treated as lemmas if preceding a hyphen
+PREFIXES = {'non', 'semi', 'anti', 'pro', 'de', 're', 'auto', 'hyper',
+            'inter', 'intra', 'meso', 'micro', 'mono', 'mini', 'pan',
+            'para', 'multi', 'pseudo', 'para', 'quasi'}
+
 # Count these as wordlike, even though they don't meet the normal criteria
 WORDLIKE = {"'re", "'m", "'d", "Mr.", "Mrs."}
 
 PROPER_NAME_BIGRAMS = {
-    'United': ('Kingdom', 'States'),
-    'New': ('York', 'Zealand', 'England', 'Orleans'),
-    'Great': ('Britain',),
-    'San': ('Francisco', 'Diego', 'Antonio'),
-    'Los': ('Angeles',),
-    'Hong': ('Kong',),
-    'Soviet': ('Union',),
-    'North': ('America',),
-    'South': ('America', 'Africa',),
-    'Saudi': ('Arabia',)}
+    'United': {'Kingdom', 'States'},
+    'New': {'York', 'Zealand', 'England', 'Orleans'},
+    'Great': {'Britain', },
+    'San': {'Francisco', 'Diego', 'Antonio'},
+    'Los': {'Angeles', },
+    'Hong': {'Kong', },
+    'Soviet': {'Union', },
+    'North': {'America', },
+    'Santa': {'Lucia', 'Maria', },
+    'South': {'America', 'Africa', },
+    'Saudi': {'Arabia', },
+    'Tierra': {'del', }
+}
 PROPER_NAME_ENDS = {'Island', 'Islands', 'Sea', 'Ocean', 'Mountain',
                     'Mountains', 'Coast', 'Forest', 'Hill', 'Hills',
                     'Valley', 'City', 'Bay', 'Beach', 'Heights',
