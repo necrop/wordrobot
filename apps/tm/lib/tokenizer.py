@@ -13,6 +13,7 @@ from .utilities import apostrophe_masker, stop_masker, stop_unmasker
 
 # We need to space these out, because the tokenizer does not do so
 SPACERS = ('\u2013', '\u2014', '\u201c', '\u201d', '\u2018', '/')
+ADJACENT_APOSTROPHE = re.compile(r"(^'| '|\(')([a-zA-Z])")
 
 
 def tokenizer(text, year):
@@ -24,6 +25,7 @@ def tokenizer(text, year):
     for char in SPACERS:
         text = text.replace(char, ' %s ' % char)
     text = text.replace('\u2019', "'")
+    text = ADJACENT_APOSTROPHE.sub(r"\1 \2", text)
 
     # Turn hyphens used as dashes into en-dashes (so not confused
     #  with genuine hyphens)

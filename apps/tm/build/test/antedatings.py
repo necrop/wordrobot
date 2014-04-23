@@ -2,7 +2,7 @@
 from apps.tm.lib.textmanager import TextManager
 from gutenberg.textmanager import TextManager as GutenbergManager
 
-text_ids = (145, )
+text_ids = (82, )
 
 
 def full_text_stats():

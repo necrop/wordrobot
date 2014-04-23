@@ -69,7 +69,8 @@ def _store_forms(block, entry, block_type, letter):
     varianttypes = set()
     alientypes = set()
     for morphset in block.morphsets():
-        if morphset.form in (entry.lemma, us_variant, block.lemma):
+        if (morphset.form in (entry.lemma, us_variant, block.lemma) or
+                morphset.is_oed_headword()):
             _add_types(morphset, standardtypes, letter)
         elif (block_type == 'entry' and
                 morphset.date().end > VARIANT_MINIMUM_END_DATE and
