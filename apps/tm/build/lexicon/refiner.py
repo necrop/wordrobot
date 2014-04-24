@@ -263,16 +263,16 @@ def _evaluate_homographs(homographs):
                       h[1].frequency >= top_frequency / 5]
     elif top_frequency > 0.01:
         homographs = [h for h in homographs if
+                      h[1].frequency >= top_frequency / 3]
+    elif top_frequency > 0.001:
+        homographs = [h for h in homographs if
                       h[1].frequency >= top_frequency / 2]
 
     # If they're all low-frequency (< 0.01 per million), we just pick the
     #  most frequent of them - it's not worth worrying about these,
     #  and retaining various different homographs will just stuff the Db.
-    if top_frequency <= 0.01:
-        return [homographs[0], ]
-    # Otherwise, we retain at most three options
     else:
-        #print('-----------------------------------------------------')
-        #for index, h in homographs[0:3]:
-        #    print(h.wordform, h.wordclass, h.wordclassflat, h.frequency)
-        return homographs[0:3]
+        homographs = [homographs[0], ]
+
+    # Return at most three options
+    return homographs[0:3]
