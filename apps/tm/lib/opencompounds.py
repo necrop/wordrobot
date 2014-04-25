@@ -11,6 +11,8 @@ CORE_WORDS = local_settings.CORE_WORDS
 CORE_VERBS = local_settings.CORE_VERBS
 MIDDLE_WORDS_FOREIGN = {'de', 'la', 'du', 'en', 'à', 'au'}
 MIDDLE_WORDS = {'of', 'and', 'in'} | MIDDLE_WORDS_FOREIGN
+NUMBERS = {'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+           'eight', 'nine'}
 
 
 def check_for_open_bigram(token):
@@ -156,7 +158,8 @@ def _plausible_open_trigram(token):
             token.previous.lower() in CORE_WORDS or
             token.next.lower() in CORE_WORDS or
             token.previous.lower() in CORE_VERBS or
-            token.next.lower() in CORE_VERBS):
+            token.next.lower() in CORE_VERBS or
+            token.next.lower() == "o'clock"):
         return False
 
     if (len(token.previous.token) < 3 or
@@ -178,8 +181,8 @@ def _plausible_open_trigram(token):
 def _plausible_hyphen_trigram(token):
     """
     Return True if this is a hyphen, and the previous and next tokens could
-    plausibly form a hyphenated trigram, e.g. |easy|-|chair|;
-    return False otherwise.
+    plausibly form a hyphenated trigram, e.g. |easy|-|chair|.
+    Return False otherwise.
     """
     if token.token != '-':
         return False
@@ -193,6 +196,10 @@ def _plausible_hyphen_trigram(token):
             not token.next.is_wordlike()):
         return False
     if token.next.next_token() == '-':
+        return False
+    # Skip things like 'twenty-five', which are sometimes lemmatized in OED,
+    #  but only in very particular senses
+    if token.next.lower() in NUMBERS:
         return False
     return True
 

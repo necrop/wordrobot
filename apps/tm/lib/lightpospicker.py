@@ -113,9 +113,7 @@ def light_pos_picker(token, candidates):
 
             if previous_token in ADJ_QUALIFIERS:
                 c.score += 1
-            elif previous_token.endswith('ly'):
-                c.score += 0.5
-            elif next_token in SENTENCE_ENDS:
+            elif previous_token in ARTICLES and next_token in SENTENCE_ENDS:
                 c.score -= 1
 
         if c.wordclass in ('VB', 'VBZ', 'VBD', 'VBN', 'VBND'):

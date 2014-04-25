@@ -54,7 +54,7 @@ def refine_index():
             winners = []
             for candidates in wordclasses.values():
                 # Sort by frequency (highest first)
-                candidates.sort(key=lambda c: c[1].frequency, reverse=True)
+                candidates.sort(key=lambda c: c[1].f2000, reverse=True)
                 # Remove the first candidate (the highest-frequency one);
                 #  this is the one we'll keep.
                 winners.append(candidates.pop(0))
@@ -76,7 +76,7 @@ def refine_index():
         varmap = defaultdict(list)
         for i, block in enumerate(blocks):
             for typeunit in block.variant_types:
-                varmap[typeunit.wordform].append((i, typeunit, block.frequency))
+                varmap[typeunit.wordform].append((i, typeunit, block.f2000))
         for wordform, candidates in varmap.items():
             if wordform not in standardmap:
                 # Sort by the frequency of the parent lemma
@@ -246,27 +246,28 @@ def _evaluate_homographs(homographs):
     Return a new list having omitted anything discardable (i.e. anything
     that's very low frequency relative to the highest-frequency candidate)
     """
-    homographs.sort(key=lambda h: h[1].frequency, reverse=True)
-    top_frequency = homographs[0][1].frequency
+    homographs.sort(key=lambda h: h[1].f2000, reverse=True)
+    top = homographs[0]
+    top_frequency = top[1].f2000
 
     # Drop any homographs that are way less frequent than the most frequent
     #  (using a sliding scale dependant on the frequency of the
     #  highest-frequency candidate)
     if top_frequency > 10:
         homographs = [h for h in homographs if
-                      h[1].frequency >= top_frequency / 20]
+                      _exceeds_threshold(h, top, 20)]
     elif top_frequency > 1:
         homographs = [h for h in homographs if
-                      h[1].frequency >= top_frequency / 10]
+                      _exceeds_threshold(h, top, 10)]
     elif top_frequency > 0.1:
         homographs = [h for h in homographs if
-                      h[1].frequency >= top_frequency / 5]
+                      _exceeds_threshold(h, top, 5)]
     elif top_frequency > 0.01:
         homographs = [h for h in homographs if
-                      h[1].frequency >= top_frequency / 3]
+                      _exceeds_threshold(h, top, 3)]
     elif top_frequency > 0.001:
         homographs = [h for h in homographs if
-                      h[1].frequency >= top_frequency / 2]
+                      _exceeds_threshold(h, top, 2)]
 
     # If they're all low-frequency (< 0.01 per million), we just pick the
     #  most frequent of them - it's not worth worrying about these,
@@ -276,3 +277,12 @@ def _evaluate_homographs(homographs):
 
     # Return at most three options
     return homographs[0:3]
+
+
+def _exceeds_threshold(homograph, top, divisor):
+    if (homograph[1].f2000 >= top[1].f2000 / divisor or
+            homograph[1].f1900 >= top[1].f1900 / divisor or
+            homograph[1].f1800 >= top[1].f1800 / divisor):
+        return True
+    else:
+        return False

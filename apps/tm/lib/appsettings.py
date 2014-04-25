@@ -40,7 +40,7 @@ for lemma, inflist in [
     ("not", "not, n't"),
     ('a', 'a, an'),
     ('may', 'may, might, mightst'),
-    ('shall', 'shall, should, shalt, shouldst'),
+    ('shall', 'shall, should, shalt, shouldst, sha'),
     ('can', 'can, could, ca, couldst'),
     ('will', "will, would, wo, 'll, wouldst"),
     ('her', "her, 'er"),
@@ -76,6 +76,7 @@ PROPER_NAME_ENDS = {'Island', 'Islands', 'Sea', 'Ocean', 'Mountain',
                     'Mountains', 'Coast', 'Forest', 'Hill', 'Hills',
                     'Valley', 'City', 'Bay', 'Beach', 'Heights',
                     'Street', 'Road', 'Lane'}
+PROPER_NAME_STARTS = {'Lake', 'Mont', 'Mount,'}
 PROPER_NAME_TITLES = {'Mr', 'Mr.', 'Mrs', 'Mrs.', 'Miss', 'Ms.', 'Sir',
                       'Lord', 'Lady', 'Captain', 'Capt.', 'Sergeant',
                       'Lieutenant', 'Lieut.', 'Pt.', 'Bp.', 'Abp.',

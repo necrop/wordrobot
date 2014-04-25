@@ -185,4 +185,6 @@ def _compile_type_data(type_unit, duplicate_pasts):
                     type_unit.form,
                     wordclass,
                     wordclassflat,
-                    type_unit.frequency())
+                    type_unit.frequency('1980-2007'),
+                    type_unit.frequency('1880-1919'),
+                    type_unit.frequency('1780-1819'))

@@ -13,6 +13,7 @@ INFLECTIONS = local_settings.INFLECTIONS
 WORDLIKE = local_settings.WORDLIKE
 PROPER_NAME_BIGRAMS = local_settings.PROPER_NAME_BIGRAMS
 PROPER_NAME_ENDS = local_settings.PROPER_NAME_ENDS
+PROPER_NAME_STARTS = local_settings.PROPER_NAME_STARTS
 PROPER_NAME_TITLES = local_settings.PROPER_NAME_TITLES
 PREFIXES = local_settings.PREFIXES
 CLOSING_PUNCTUATION = local_settings.CLOSING_PUNCTUATION
@@ -238,7 +239,8 @@ class Token(object):
         if (self.next_token() in PROPER_NAME_ENDS and
                 self.is_capitalized()):
             return True
-        elif (self.token in PROPER_NAME_TITLES and
+        elif ((self.token in PROPER_NAME_TITLES or
+                self.token in PROPER_NAME_STARTS) and
                 self.next and
                 self.next.is_capitalized()):
             return True

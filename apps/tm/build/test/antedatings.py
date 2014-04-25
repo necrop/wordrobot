@@ -2,16 +2,16 @@
 from apps.tm.lib.textmanager import TextManager
 from gutenberg.textmanager import TextManager as GutenbergManager
 
-text_ids = (82, )
+text_ids = (6593, )
 
 
 def full_text_stats():
     for text_id in text_ids:
         doc = GutenbergManager(text_id)
         print('===========================================================')
-        print(doc.metadata().author, doc.metadata().title, doc.metadata().year)
+        print(doc.citation())
         print('===========================================================')
-        docyear = doc.metadata().year
+        docyear = doc.metadata.year
         for para in doc.paragraphs():
             # Process this paragraph
             tm = TextManager(para, docyear)
