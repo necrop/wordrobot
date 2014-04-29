@@ -126,7 +126,8 @@ def light_pos_picker(token, candidates):
             if next_token == '-':
                 c.score += 0.5
 
-
+    period = token.docperiod
+    candidates.sort(key=lambda c: c.__dict__[period], reverse=True)
     candidates.sort(key=lambda c: c.score, reverse=True)
     #_display_results(previous_token, token.token, next_token, candidates)
     return candidates[0]
@@ -139,4 +140,4 @@ def _display_results(previous_token, token, next_token, candidates):
     print('-----------------------------------------------------')
     print('%s -> %s -> %s' % (previous_token, token, next_token))
     for c in candidates:
-        print('\t%s\t%s\t%f\t%d' % (c.wordform, c.wordclass, c.frequency, c.score))
+        print('\t%s\t%s\t%f\t%d' % (c.wordform, c.wordclass, c.f2000, c.score))

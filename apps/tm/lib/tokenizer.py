@@ -17,6 +17,7 @@ ADJACENT_APOSTROPHE = re.compile(r"(^'| '|\(')([a-zA-Z])")
 
 
 def tokenizer(text, year):
+    Token.set_year(year)
 
     #-----------------------------------------------
     # Clean-up and lineation
@@ -49,7 +50,7 @@ def tokenizer(text, year):
             sentence = stop_unmasker(sentence)
             # Tokenize this sentence
             sentence = re.sub(r'([:,])$', r' \1', sentence)
-            sentence_tokens = [Token(w, year, sentence) for w in
+            sentence_tokens = [Token(w, sentence) for w in
                                word_tokenize(sentence)]
             # Identify lemmas for each token (where possible)
             sentence_tokens = _identify_lemmas(sentence_tokens)

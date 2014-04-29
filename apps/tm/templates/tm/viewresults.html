@@ -160,7 +160,8 @@
 						<th>#</th>
 						<th sort="lemma"><i class="icon-resize-vertical icon-white"></i>&nbsp;Lemma</th>
 						<th sort="occurrences"><i class="icon-resize-vertical icon-white"></i>&nbsp;Occurrences in this document</th>
-						<th sort="frequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in mod. English (per million)</th>
+						<th sort="frequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in {{ year }} (per million)</th>
+						<th sort="modfrequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in mod. English</th>
 						<th sort="year"><i class="icon-resize-vertical icon-white"></i>&nbsp;First recorded use</th>
 						<th sort="origin"><i class="icon-resize-vertical icon-white"></i>&nbsp;Etymological origin</th>
 					</tr>
@@ -208,6 +209,7 @@
 			{% include "tm/includes/submissionform.html" with author=author title=title year=year text=text submit_wording='Update' mode='submit' %}
 		</div>
 	</div>
+
 
 
 	{% if include_save %}
@@ -318,5 +320,8 @@
 	var tokenjson = JSON.parse('{{ jsontokens|safe }}');
 </script>
 <script type="text/javascript" src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="{% static 'tm/js/toc.js' %}"></script>
+<script src="{% static 'tm/js/frequency.js' %}"></script>
+<script src="{% static 'tm/js/lemma.js' %}"></script>
 <script src="{% static 'tm/js/viewresults.js' %}"></script>
 {% endblock %}

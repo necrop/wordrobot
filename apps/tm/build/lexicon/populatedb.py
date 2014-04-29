@@ -91,7 +91,7 @@ def populate_lexical():
             else:
                 language_id = lang_node.id
 
-            if block.definition and block.frequency < frequency_cutoff:
+            if block.definition and block.f2000 < frequency_cutoff:
                 definition_counter += 1
                 definitions.append(Definition(id=definition_counter,
                                               text=block.definition[:100]))
@@ -99,19 +99,24 @@ def populate_lexical():
             else:
                 definition_id = None
 
-            lemma_counter +=1
+            lemma_counter += 1
             lemmas.append(Lemma(id=lemma_counter,
                                 lemma=block.lemma,
                                 sort=block.sort,
                                 wordclass=block.wordclass,
-                                frequency=block.frequency,
                                 firstyear=block.start,
                                 lastyear=block.end,
                                 refentry=block.refentry,
                                 refid=block.refid,
                                 thesaurus_id=block.htlink,
                                 language_id=language_id,
-                                definition_id=definition_id))
+                                definition_id=definition_id,
+                                f2000=_rounder(block.f2000),
+                                f1950=_rounder(block.f1950),
+                                f1900=_rounder(block.f1900),
+                                f1850=_rounder(block.f1850),
+                                f1800=_rounder(block.f1800),
+                                f1750=_rounder(block.f1750),))
 
             for typelist in (block.standard_types,
                              block.variant_types,
@@ -120,8 +125,10 @@ def populate_lexical():
                     wordforms.append(Wordform(sort=typeunit[0],
                                               wordform=typeunit[1],
                                               wordclass=typeunit[2],
-                                              frequency=typeunit[4],
-                                              lemma_id=lemma_counter))
+                                              lemma_id=lemma_counter,
+                                              f2000=_rounder(typeunit[4]),
+                                              f1900=_rounder(typeunit[5]),
+                                              f1800=_rounder(typeunit[6]),))
 
             if i % 1000 == 0:
                 Definition.objects.bulk_create(definitions)
@@ -163,3 +170,11 @@ def populate_proper_names():
                     names = []
 
     ProperName.objects.bulk_create(names)
+
+
+def _rounder(n):
+    n = float('%.2g' % n)
+    if n == 0 or n > 1:
+        return int(n)
+    else:
+        return n

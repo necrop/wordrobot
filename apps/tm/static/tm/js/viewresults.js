@@ -70,7 +70,6 @@ $(document).ready( function() {
 	colour_key = $('#continuousTextKey');
 	thesaurus_slider = $('#thesaurusSlider');
 
-	generateToc();
 	compileLinearText();
 	compileStatistics();
 	drawLanguageRatios();
@@ -109,29 +108,11 @@ function showUrlModal() {
 //===============================================================
 
 function uncompressLemmaData(compressed) {
-	var expansions = {F: 'French', L: 'Latin', G: 'Germanic', R: 'Romance',
-		WG: 'West Germanic', OE: 'Old English'};
-	function expandLanguage(lang) {
-		var exp = expansions[lang];
-		if (!exp) { exp = lang; }
-		return exp;
-	}
-
 	var expanded = [];
 	for (var i = 0; i < compressed.length; i += 1) {
 		var row = compressed[i];
-		var data = {id: row[0],
-					url: row[1],
-					lemma: row[2],
-					sort: row[3] || row[2],
-					frequency: row[4],
-					year: row[5],
-					language: expandLanguage(row[6]),
-					family: expandLanguage(row[7]),
-					count: row[8],
-					definitionid: row[9],
-					thesaurusid: row[10]};
-		expanded.push(data);
+		var lemma = new Lemma(row);
+		expanded.push(lemma);
 	}
 
 	// Make sure that each lemma knows its own index position in the array.
@@ -167,74 +148,6 @@ function initializeThesaurusData() {
 	}
 	return data;
 }
-
-
-
-//===============================================================
-// Tables of contents
-//===============================================================
-
-function generateToc() {
-	var menu_container = $('#sectionsTocContainer'); 
-	var menu_list1 = $('#sectionsToc > ul').first();
-	var menu_list2 = $('#sectionsTocShort > ul').first();
-
-	var menu = [];
-	var sections = $('.row-fluid');
-	sections.each(function(i) {
-		var toc_id = 'toc-' + (i + 1);
-		var header = $(this).find('h2').first();
-		$(this).attr('id', toc_id);
-
-		if (header.text() === 'Tinker') {
-			$('#tinkerlink').attr('href', '#' + toc_id);
-		}
-
-		addSectionNumber(header, i);
-		menu.push([toc_id, header.text(), i + 1]);
-	});
-
-	// Populate the menu container
-	for (var i = 0; i < menu.length; i += 1) {
-		var item = menu[i];
-		var rowfull = '<li><a href="#' + item[0] + '">' + item[1] + '&nbsp;<i class="icon-chevron-right"></i></a></li>';
-		var rowshort = '<li><a href="#' + item[0] + '">' + item[2] + '</a></li>';
-		menu_list1.append(rowfull);
-		menu_list2.append(rowshort);
-	}
-
-	// Reposition
-	var distance_from_bottom = ($(window).height() / 2) - (menu_container.outerHeight() / 2);
-	menu_container.css('bottom', distance_from_bottom + 'px');
-
-	// Set listeners for mouseovers and clicks
-	menu_container.hover(function() {
-		$('#sectionsToc').show();
-		$('#sectionsTocShort').hide();
-	}, function() {
-		$('#sectionsToc').hide();
-		$('#sectionsTocShort').show();
-	});
-	menu_container.find('a[href]').click( function(event) {
-		scrollToSection(event, $(this));
-	});
-}
-
-function scrollToSection(event, element) {
-	var target = $('body').find(element.attr('href')).first();
-	var offset = target.offset(),
-		destination = offset.top;
-	// Scroll to the target element
-	$('html, body').animate({scrollTop: destination}, 500);
-	event.preventDefault();
-}
-
-function addSectionNumber(header, i) {
-	var current_text = header.text();
-	header.text((i + 1) + '. ' + current_text);
-}
-
-
 
 
 
@@ -312,7 +225,7 @@ function colourKey(mode) {
 
 function showLemmaDetails(lemma, event) {
 	var occurrences = lemma.count;
-	var frequency = lemma.frequency;
+	var frequency = lemma.f2000();
 	var year = lemma.year;
 
 	var occurrence_text;
@@ -541,7 +454,7 @@ function highlightLowFrequency() {
 	var tokens = $('#continuousText').find('.token-oed');
 	tokens.each( function(i) {
 		var lemma = elementToLemma($(this));
-		var band = frequency_band(lemma.frequency);
+		var band = frequency_band(lemma.f2000());
 		$(this).css('font-size', (band * 0.5) + 'em').css('opacity', 0.9);
 	});
 }
@@ -955,7 +868,7 @@ function drawTimelineChart() {
 		.range([0, canvas_width]);
 
 	// y-axis scale
-	var max_frequency = d3.max(lemmadata, function(d) { return d.frequency; });
+	var max_frequency = d3.max(lemmadata, function(d) { return d.f2000(); });
 	var y_scale = d3.scale.pow().exponent(0.1)
 		.domain([0, max_frequency * 2])
 		.range([canvas_height, 0]);
@@ -1037,7 +950,7 @@ function drawTimelineChart() {
 				return x_scale(random_year);
 			}
 		})
-		.attr('cy', function (d) { return y_scale(clampedFrequency(d.frequency)); })
+		.attr('cy', function (d) { return y_scale(clampedFrequency(d.f2000())); })
 		.style('fill', function (d) { return languageToColour(d.family, 'bright'); })
 		.attr('r', function (d) { return Math.sqrt(d.count) * dotscaler; });
 
@@ -1300,13 +1213,13 @@ function composeLemmaTable() {
 		if (display_year < 1150) {
 			display_year = '&lt; 1150';
 		}
-		var display_fq = l.frequency * 1;
+		var display_fq = l.f2000() * 1;
 		if (display_fq < .0001) {
 			display_fq = '&lt; .0001';
 		}
 
 		var tr_tag = '<tr class="token-oed" idx="' + l.idx + '">';
-		var row = $(tr_tag + '<td>' + (i + 1) + '</td><td class="lemmaCell">' + l.lemma + '</td><td>' + l.count + '</td><td>' + display_fq + '</td><td>' + display_year + '</td><td>' + l.language + '</td></tr>');
+		var row = $(tr_tag + '<td>' + (i + 1) + '</td><td class="lemmaCell">' + l.lemma + '</td><td>' + l.count + '</td><td>' + l.ftable.frequency(document_year, true) + '</td><td>' + display_fq + '</td><td>' + display_year + '</td><td>' + l.language + '</td></tr>');
 		row.css('background-color', languageToColour(l.family, 'pale'));
 		row.appendTo(tbody);
 	}
@@ -1334,6 +1247,8 @@ function resortLemmaTable(cell) {
 			lemmaOccurrenceSort(direction);
 		} else if (column === 'frequency') {
 			lemmaFrequencySort(direction);
+		} else if (column === 'modfrequency') {
+			lemmaModFrequencySort(direction);
 		} else if (column === 'year') {
 			lemmaDateSort(direction);
 		} else if (column === 'origin') {
@@ -1399,11 +1314,23 @@ function lemmaDateSort(direction) {
 function lemmaFrequencySort(direction) {
 	if (direction === 'ascending') {
 		lemmadata_sortable.sort(function(a, b) {
-			return clampedFrequency(a.frequency) - clampedFrequency(b.frequency);
+			return clampedFrequency(a.ftable.frequency(document_year, true)) - clampedFrequency(b.ftable.frequency(document_year, true));
 		});
 	} else {
 		lemmadata_sortable.sort(function(a, b) {
-			return clampedFrequency(b.frequency) - clampedFrequency(a.frequency);
+			return clampedFrequency(b.ftable.frequency(document_year, true)) - clampedFrequency(a.ftable.frequency(document_year, true));
+		});
+	}
+}
+
+function lemmaModFrequencySort(direction) {
+	if (direction === 'ascending') {
+		lemmadata_sortable.sort(function(a, b) {
+			return clampedFrequency(a.f2000()) - clampedFrequency(b.f2000());
+		});
+	} else {
+		lemmadata_sortable.sort(function(a, b) {
+			return clampedFrequency(b.f2000()) - clampedFrequency(a.f2000());
 		});
 	}
 }
@@ -1660,4 +1587,3 @@ function thesaurusSensitiveToken(t) {
 	}
 	return node;
 }
-

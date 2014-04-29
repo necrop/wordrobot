@@ -29,7 +29,6 @@ class Lemma(models.Model):
     lemma = models.CharField(max_length=40)
     sort = models.CharField(max_length=40, db_index=True)
     wordclass = models.CharField(max_length=10, null=True)
-    frequency = models.FloatField(null=True)
     firstyear = models.IntegerField(null=True)
     lastyear = models.IntegerField(null=True)
     refentry = models.IntegerField()
@@ -37,6 +36,12 @@ class Lemma(models.Model):
     language = models.ForeignKey('Language', null=True)
     definition = models.ForeignKey('Definition', null=True)
     thesaurus = models.ForeignKey('ThesaurusClass', null=True)
+    f2000 = models.FloatField(null=True)
+    f1950 = models.FloatField(null=True)
+    f1900 = models.FloatField(null=True)
+    f1850 = models.FloatField(null=True)
+    f1800 = models.FloatField(null=True)
+    f1750 = models.FloatField(null=True)
 
     class Meta:
         ordering = ['sort', ]
@@ -113,13 +118,18 @@ class Lemma(models.Model):
                 self.oed_identifier(),
                 json_safe(self.lemma),
                 abbreviate_sortcode(self.lemma, self.sort),
-                self.frequency,
                 self.firstyear,
                 abbreviate_language(self.language_name() or 'undefined'),
                 abbreviate_language(self.language_family() or 'undefined'),
                 self.token_count(),
                 int(self.definition_id or 0),
-                theslink(self.lemma, self.thesaurus_id), ]
+                theslink(self.lemma, self.thesaurus_id),
+                self.f1750,
+                self.f1800,
+                self.f1850,
+                self.f1900,
+                self.f1950,
+                self.f2000]
 
 
 class Wordform(models.Model):
@@ -127,17 +137,19 @@ class Wordform(models.Model):
     wordform = models.CharField(max_length=40)
     sort = models.CharField(max_length=40, db_index=True)
     wordclass = models.CharField(max_length=10, null=True)
-    frequency = models.FloatField(null=True)
     lemma = models.ForeignKey('Lemma')
+    f2000 = models.FloatField(null=True)
+    f1900 = models.FloatField(null=True)
+    f1800 = models.FloatField(null=True)
 
     class Meta:
-        ordering = ['-frequency', ]
+        ordering = ['-f2000', ]
 
     def __repr__(self):
         if self.frequency:
-            return '<Wordform: %s/%s (f=%f)>' % (self.wordform,
-                                                 self.wordclass,
-                                                 self.frequency)
+            return '<Wordform: %s/%s (f2000=%f)>' % (self.wordform,
+                                                     self.wordclass,
+                                                     self.f2000)
         else:
             return '<Wordform: %s/%s>' % (self.wordform, self.wordclass)
 

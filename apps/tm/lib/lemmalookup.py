@@ -39,7 +39,7 @@ def lemma_lookup(token, sort, year, **kwargs):
         # Look up the lemma
         qset = _cached_lemma_lookup(target_lemma)
         # The one we want will be the most frequent lemma
-        lemma = qset.order_by('-frequency').first()
+        lemma = qset.order_by('-f2000').first()
         # Fake a barebones Wordform object containing the lemma. We give the
         #  wordform the same wordclass as the lemma; which won't always be
         #  quote true, but should be close enough to be not worth

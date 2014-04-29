@@ -84,11 +84,20 @@ def _store_forms(block, entry, block_type, letter):
 
     refentry, refid = block.link(target='oed', asTuple=True)
 
-    frequency = block.frequency()
-    if frequency is not None:
-        frequency = float('%.2g' % frequency)
-        if frequency > 1:
-            frequency = int(frequency)
+    if block.has_frequency_table():
+        f2000 = block.frequency_table().frequency(period='1990-2007')
+        f1950 = block.frequency_table().frequency(period='1940-1959')
+        f1900 = block.frequency_table().frequency(period='1890-1909')
+        f1850 = block.frequency_table().frequency(period='1840-1859')
+        f1800 = block.frequency_table().frequency(period='1790-1809')
+        f1750 = block.frequency_table().frequency(period='1750-1769')
+    else:
+        f2000 = 0
+        f1950 = 0
+        f1900 = 0
+        f1850 = 0
+        f1800 = 0
+        f1750 = 0
 
     definition = block.definition(src='oed') or None
 
@@ -99,14 +108,19 @@ def _store_forms(block, entry, block_type, letter):
                      block.lemma,
                      block.wordclass(),
                      definition,
-                     frequency,
                      block.date().exact('start'),
                      block.date().exact('end'),
                      None,
                      None,
                      standardtypes,
                      varianttypes,
-                     alientypes,)
+                     alientypes,
+                     _round_number(f2000),
+                     _round_number(f1950),
+                     _round_number(f1900),
+                     _round_number(f1850),
+                     _round_number(f1800),
+                     _round_number(f1750),)
 
 
 def _add_types(morphset, target_set, letter):
@@ -136,9 +150,13 @@ def _add_types(morphset, target_set, letter):
     # ...and pick the one with the highest frequency (giving it the sum
     #   of all the frequencies)
     for cluster in clusters.values():
-        total_freq = sum([t.frequency for t in cluster])
-        cluster.sort(key=lambda t: t.frequency, reverse=True)
-        new_typeunit = cluster[0]._replace(frequency=total_freq)
+        total_f2000 = sum([t.f2000 for t in cluster])
+        total_f1900 = sum([t.f1900 for t in cluster])
+        total_f1800 = sum([t.f1800 for t in cluster])
+        cluster.sort(key=lambda t: t.f2000, reverse=True)
+        new_typeunit = cluster[0]._replace(f2000=total_f2000,
+                                           f1900=total_f1900,
+                                           f1800=total_f1800)
         target_set.add(new_typeunit)
 
 
@@ -181,10 +199,27 @@ def _compile_type_data(type_unit, duplicate_pasts):
     elif wordclassflat in ('RB', 'RBR', 'RBS'):
         wordclassflat = 'JJ'
 
+    if type_unit.has_frequency_table():
+        f2000 = type_unit.frequency_table().frequency(period='1980-2007')
+        f1900 = type_unit.frequency_table().frequency(period='1880-1919')
+        f1800 = type_unit.frequency_table().frequency(period='1780-1819')
+    else:
+        f2000 = 0
+        f1900 = 0
+        f1800 = 0
+
     return TypeData(type_unit.sort,
                     type_unit.form,
                     wordclass,
                     wordclassflat,
-                    type_unit.frequency('1980-2007'),
-                    type_unit.frequency('1880-1919'),
-                    type_unit.frequency('1780-1819'))
+                    _round_number(f2000),
+                    _round_number(f1900),
+                    _round_number(f1800))
+
+
+def _round_number(n):
+    if n > 1:
+        n = int(n)
+    else:
+        n = float('%.2g' % n)
+    return n

@@ -21,7 +21,7 @@ class LemmaCollection(object):
     def rank_by_general_frequency(self):
         rank = self.lemmas()
         rank.sort(key=lambda l: l.sort)
-        rank.sort(key=lambda l: l.frequency, reverse=True)
+        rank.sort(key=lambda l: l.f2000, reverse=True)
         return rank
 
     def rank_by_document_frequency(self):

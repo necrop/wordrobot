@@ -23,13 +23,14 @@ UNSPACED = set(('(', '[', '\u201c', '/', '-')) # no space before these
 class Token(object):
 
     lemma_cache = {}
+    docyear = None
+    docperiod = None
 
-    def __init__(self, token, year, sentence):
+    def __init__(self, token, sentence):
         self.token_verbatim = _token_cleanup(token)
-        self.token = _token_adjusted(self.token_verbatim, year)
+        self.token = _token_adjusted(self.token_verbatim, self.docyear)
         self.sentence = sentence
 
-        self.docyear = year  # Year of the document this comes from
         self.first = False  # Is this the first token in its sentence?
         self.last = False  # Is this the last token in its sentence?
         self.previous = None  # The preceding token
@@ -44,6 +45,15 @@ class Token(object):
     @classmethod
     def clear_cache(cls):
         cls.lemma_cache = {}
+
+    @classmethod
+    def set_year(cls, year):
+        cls.docyear = year
+        periods = []
+        for p in (1800, 1900, 2000):
+            periods.append((p, abs(p - year)))
+        periods.sort(key=lambda p: p[1])
+        cls.docperiod = 'f%d' % periods[0][0]
 
     def lower(self):
         return self.token.lower()
@@ -399,10 +409,10 @@ class Token(object):
         if self.lemma_manager() is None:
             return None
         else:
-            if self.lemma_manager().frequency > 1:
-                return int(self.lemma_manager().frequency)
+            if self.lemma_manager().f2000 > 1:
+                return int(self.lemma_manager().f2000)
             else:
-                return self.lemma_manager().frequency
+                return self.lemma_manager().f2000
 
     def log_band(self):
         if self.lemma_manager() is None:
