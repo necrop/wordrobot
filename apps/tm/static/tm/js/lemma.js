@@ -1,4 +1,4 @@
-/* global $, d3 */
+/* global $, d3, document_year */
 'use strict';
 
 var expansions = {F: 'French', L: 'Latin', G: 'Germanic', R: 'Romance',
@@ -24,7 +24,60 @@ function Lemma(row) {
 	this.ftable = new FrequencyTable(row.slice(10), this.year);
 }
 
-function f2000() {
+Lemma.prototype.f2000 = function() {
 	return this.ftable.frequency(2000, false);
 }
-Lemma.prototype.f2000 = f2000;
+
+Lemma.prototype.getDefinition = function() {
+	if (this.definition) {
+		return this.definition;
+	} else if (this.definitionid > 0) {
+		definitionAjaxCall(this);
+		return this.definition;
+	} else {
+		return null;
+	}
+}
+
+function definitionAjaxCall(lemma) {
+	$.ajax({
+		type: 'GET',
+		dataType: 'json',
+		url: definition_url + lemma.definitionid,
+		success: function(data) { lemma.definition = data[0]},
+		fail: function(data) { lemma.definition = '[Definition not found]'},
+		async: false
+	});
+}
+
+Lemma.prototype.linesplitDefinition = function() {
+	var definition = this.getDefinition();
+	if (definition) {
+		var lines = [];
+		var text = '';
+		var words = definition.split(/ /);
+		for (var i = 0; i < words.length; i += 1) {
+			text += words[i] + ' ';
+			if (text.length > 50) {
+				lines.push(text);
+				text = '';
+			}
+		}
+		if (text) {
+			lines.push(text);
+		}
+		return lines.join('<br/>');
+	} else {
+		return null;
+	}
+}
+
+
+
+//------------------------------------------------------
+// Class methods
+//------------------------------------------------------
+
+Lemma.setDefinitionUrl = function(url) {
+	Lemma.definition_url = url;
+}

@@ -7,14 +7,14 @@
 
 
 {% block page_title %}
-	{% if author %}{{ author }}, {% endif %}{{ title }} ({{year}})
+	{% if author %}{{ author }}, {% endif %}{{ title }} ({{ document_year }})
 {% endblock %}
 
 
 {% block pagecontent %}
 	<div class="hero-unit subhero">
 		<h2>
-			{% if author %}{{ author }}, {% endif %}<em>{{ title }}</em> ({{year}})
+			{% if author %}{{ author }}, {% endif %}<em>{{ title }}</em> ({{ document_year }})
 		</h2>
 	</div>
 
@@ -36,26 +36,9 @@
 			</div>
 
 			<div id="textContainer">
-				<div id="continuousText"></div>
 				<div id="continuousTextKey"></div>
+				<div id="continuousText"></div>
 			</div>
-		</div>
-	</div>
-
-
-
-	<div class="row-fluid">
-		<div class="span12 well">
-			<h2>Statistics</h2>
-			<table class="table table-bordered" id="statistics">
-				<tbody>
-					<tr><td>Tokens (words &amp; punctuation)</td><td id="ntokens"></td></tr>
-					<tr><td>Words</td><td id="nwords"></td></tr>
-					<tr><td>Distinct lemmas</td><td id="nlemmas"></td></tr>
-					<tr><td>Characters (not including spaces)</td><td id="ncharacters"></td></tr>
-					<tr><td>Mean average word length (characters)</td><td id="avechars"></td></tr>
-				</tbody>
-			</table>
 		</div>
 	</div>
 
@@ -67,10 +50,28 @@
 			<div class="commentary">
 				<p>Each data point represents a word (dictionary lemma) found in this document. Position on the x-axis shows the first recorded use (based on the first quotation given in the OED). Position on the y-axis shows the word's frequency in modern English. Note that the y-axis (frequency) is logarithmic.</p>
 				<p>The size of each data point indicates the frequency of the word in this document, and the colour of the data point indicates the language family from which the word is derived (see key below). Click on a data point for more information about the word.</p>
-				<p>Dates before 1150 (the shaded area on the chart) are speculative (see discussion <a href="http://public.oed.com/aspects-of-english/english-in-time/old-english-in-the-oed/" target="ext">here</a>). For data points in this period, exact position on the x-axis is largely arbitrary, and should not be taken to indicate actual date of first use.</p>
+				<p>Dates before 1150 (the shaded area on the chart) are not really indicative of first use (see discussion <a href="http://public.oed.com/aspects-of-english/english-in-time/old-english-in-the-oed/" target="ext">here</a>). For data points in this period, relative positions on the x-axis are largely arbitrary, and should not be taken to indicate any actual order of first use.</p>
 				<p>Proper names and unrecognized words are not shown.</p>
 			</div>
-			<div id="timelineContainer"></div>
+
+			<div id="scatterContainer">
+				<div id="scatterKey"></div>
+				<div id="scatterChart"></div>
+			</div>
+
+			<div class="btn-group" id="scatterButtonsContainer">
+				<button class="btn disabled">Show frequencies in:</button>
+				{% for yr in scatter_buttons %}
+					<button class="btn scatterFrequencyControl" title="Show frequencies in {{ yr }}">
+						{%  if yr == document_year %}
+							<strong>{{ yr }}</strong>
+						{% else %}
+							{{ yr }}
+						{% endif %}
+					</button>
+				{% endfor %}
+				<button class="btn" id="playDiachronicFrequency" title="Auto-play changes in frequencies"><i class="icon-play"></i></button>
+			</div>
 
 			<div id="lemmaTooltip" class="popup">
 				<h2></h2>
@@ -88,7 +89,7 @@
 			<h2>Language families</h2>
 			<div class="commentary">
 				<p>Where do the words in this document come from? This chart aggregates the lexical content of the document into the major language families from which English words are derived.</p>
-				<p>In typical English text, the high proportion of Germanic is due in large part to the fact that most of the very common words (<em>the, and, to, for, by, with</em>, etc.) are derived from Old English, a West Germanic language.</p>
+				<p>In typical English text, the high proportion of Germanic is due in large part to the fact that most of the very common words (<em>the, and, to, for, by, with</em>, etc.) are Germanic in origin.</p>
 				<p>Proper names and unrecognized words have been disregarded.</p>
 			</div>
 			<div id="languageRatioContainer"></div>
@@ -114,6 +115,33 @@
 					<div><span id="growthDetailsValue"></span>% of <span id="growthDetailsDesc"></span> this document existed in <span id="growthDetailsYear"></span>.</div>
 				</div>
 			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Frequency change</h2>
+			{% if document_year < 1750 %}
+				<div class="commentary">
+					<p>This feature cannot be compiled for documents before 1750. This is because reliable frequency data is not available for earlier periods.</p>
+				</div>
+			{% else %}
+				<div class="commentary">
+					<p>The following words increased significantly in frequency in the period around {{ document_year }} (steepest rise first):</p>
+				</div>
+				<div>
+					<ul id="increasingLemmas"></ul>
+				</div>
+
+				<div class="commentary">
+					<p>The following words declined significantly in frequency in the period around {{ document_year }} (steepest fall first):</p>
+				</div>
+				<div>
+					<ul id="decreasingLemmas"></ul>
+				</div>
+			{% endif %}
 		</div>
 	</div>
 
@@ -160,7 +188,7 @@
 						<th>#</th>
 						<th sort="lemma"><i class="icon-resize-vertical icon-white"></i>&nbsp;Lemma</th>
 						<th sort="occurrences"><i class="icon-resize-vertical icon-white"></i>&nbsp;Occurrences in this document</th>
-						<th sort="frequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in {{ year }} (per million)</th>
+						<th sort="frequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in {{ document_year }} (per million)</th>
 						<th sort="modfrequency"><i class="icon-resize-vertical icon-white"></i>&nbsp;Frequency in mod. English</th>
 						<th sort="year"><i class="icon-resize-vertical icon-white"></i>&nbsp;First recorded use</th>
 						<th sort="origin"><i class="icon-resize-vertical icon-white"></i>&nbsp;Etymological origin</th>
@@ -170,6 +198,23 @@
 				</tbody>
 			</table>
 			</div>
+		</div>
+	</div>
+
+
+
+	<div class="row-fluid">
+		<div class="span12 well">
+			<h2>Statistics</h2>
+			<table class="table table-bordered" id="statistics">
+				<tbody>
+					<tr><td>Tokens (words &amp; punctuation)</td><td id="ntokens"></td></tr>
+					<tr><td>Words</td><td id="nwords"></td></tr>
+					<tr><td>Distinct lemmas</td><td id="nlemmas"></td></tr>
+					<tr><td>Characters (not including spaces)</td><td id="ncharacters"></td></tr>
+					<tr><td>Mean average word length (characters)</td><td id="avechars"></td></tr>
+				</tbody>
+			</table>
 		</div>
 	</div>
 
@@ -206,7 +251,7 @@
 			<div class="commentary">
 				<p>Try making some changes to the text, then click <strong>Update</strong>. Or go to <a href="{% url 'tm:submission_form' %}">Experiment</a> to start again with a new piece of text.</p>
 			</div>
-			{% include "tm/includes/submissionform.html" with author=author title=title year=year text=text submit_wording='Update' mode='submit' %}
+			{% include "tm/includes/submissionform.html" with author=author title=title year=document_year text=text submit_wording='Update' mode='submit' %}
 		</div>
 	</div>
 
@@ -219,7 +264,7 @@
 				<div class="commentary">
 					<p>Clicking the <strong>Save</strong> button stores your text, and generates a URL which you can use to revisit this page or share with others.</p>
 				</div>
-				{% include "tm/includes/submissionform.html" with author=author title=title year=year text=text submit_wording='Save' mode='save' %}
+				{% include "tm/includes/submissionform.html" with author=author title=title year=document_year text=text submit_wording='Save' mode='save' %}
 			</div>
 		</div>
 	{%  endif %}
@@ -257,7 +302,8 @@
 		<div>
 			<p><em><defn></defn></em></p>
 			<p>Used <count></count> in this document <eqfq></eqfq>.</p>
-			<p>Frequency in modern English: <fq></fq> per million tokens</p>
+			<p>Frequency in {{ document_year }}: <fqold></fqold> per million tokens</p>
+			<p>Frequency in mod. English: <fqmod></fqmod> per million tokens</p>
 			<p>First recorded use: <yr></yr></p>
 			<p>Etymological origin: <lang></lang></p>
 			<p><a class="a-oed" href="#" target="ext">OED entry &raquo;</a></p>
@@ -307,15 +353,12 @@
 {% endblock %}
 
 
-{% block hidden_elements %}
-	<div id="documentYear">{{ year }}</div>
-	<div id="definitionUrl">{% url 'tm:definition' id='' %}</div>
-	<div id="thesaurusUrl">{% url 'tm:thesaurus' idstring='' %}</div>
-{% endblock %}
-
 
 {% block additional_scripts %}
 <script type="text/javascript">
+	var document_year = {{ document_year }};
+	var thesaurus_url = "{% url 'tm:thesaurus' idstring='' %}";
+	var definition_url = "{% url 'tm:definition' id='' %}";
 	var lemmajson = JSON.parse('{{ jsonlemmas|safe }}');
 	var tokenjson = JSON.parse('{{ jsontokens|safe }}');
 </script>

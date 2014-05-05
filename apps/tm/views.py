@@ -20,6 +20,7 @@ def display_canned(request, **kwargs):
     Display results for a canned document
     """
     from .models import Document
+    from .lib.scatterbuttons import scatter_buttons
     author = kwargs.get('author')
     title = kwargs.get('title')
     try:
@@ -28,7 +29,8 @@ def display_canned(request, **kwargs):
         raise Http404()
     else:
         params = {'text': record.text, 'author': record.author,
-                  'title': record.title, 'year': record.year,
+                  'title': record.title, 'document_year': record.year,
+                  'scatter_buttons': scatter_buttons(record.year),
                   'jsonlemmas': record.lemmas,
                   'jsontokens': record.tokens,
                   'include_save': False}
@@ -41,6 +43,7 @@ def display_stored(request, **kwargs):
     """
     from .lib.textmanager import TextManager
     from .models import UserSubmission
+    from .lib.scatterbuttons import scatter_buttons
     identifier = kwargs.get('identifier')
     try:
         record = UserSubmission.objects.get(identifier=identifier)
@@ -51,10 +54,11 @@ def display_stored(request, **kwargs):
         json_lemmas = tc.lemmas_datastruct(formalism='json')
         json_tokens = tc.tokens_datastruct(formalism='json')
         params = {'text': record.text, 'author': record.author,
-                  'title': record.title, 'year': record.year,
+                  'title': record.title, 'document_year': record.year,
+                  'scatter_buttons': scatter_buttons(record.year),
                   'jsonlemmas': json_lemmas,
                   'jsontokens': json_tokens,
-                  'include_save': False,}
+                  'include_save': False}
     return render(request, 'tm/viewresults.html', params)
 
 
@@ -95,13 +99,15 @@ def submit(request):
     """
     from .lib.submissioncleaner import submission_cleaner
     from .lib.textmanager import TextManager
+    from .lib.scatterbuttons import scatter_buttons
     if request.method == 'POST':
         post = submission_cleaner(request.POST.copy())
         tc = TextManager(post['text'], post['year'])
         json_lemmas = tc.lemmas_datastruct(formalism='json')
         json_tokens = tc.tokens_datastruct(formalism='json')
         params = {'text': tc.text, 'author': post['author'],
-                  'title': post['title'], 'year': post['year'],
+                  'title': post['title'], 'document_year': post['year'],
+                  'scatter_buttons': scatter_buttons(post['year']),
                   'jsonlemmas': json_lemmas,
                   'jsontokens': json_tokens,
                   'include_save': True}
@@ -129,14 +135,15 @@ def fetch_definition(request, **kwargs):
     Return the definition text from a given row in the Definition table
     (in response to AJAX requests)
     """
+    import json
     from .models import Definition
     definition_id = int(kwargs.get('id'))
     try:
-        record = Definition.objects.get(id=definition_id)
+        definition = Definition.objects.get(id=definition_id).text
     except Definition.DoesNotExist:
-        return ''
-    else:
-        return HttpResponse(record.text or '', content_type='text/plain')
+        definition = '[definition not found]'
+    response = json.dumps([definition, ])
+    return HttpResponse(response, content_type='text/plain')
 
 
 def fetch_thesaurus_alternatives(request, **kwargs):

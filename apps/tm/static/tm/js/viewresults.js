@@ -1,8 +1,8 @@
-/*global $, d3, lemmajson, tokenjson*/
+/*global $, d3, lemmajson, tokenjson, document_year */
 'use strict';
 
 // Global variables
-var ngram_url = 'https://books.google.com/ngrams/graph?year_start=1800&year_end=2000&corpus=15&smoothing=3&content=';
+var ngram_url = 'https://books.google.com/ngrams/graph?year_start=1750&year_end=2000&corpus=15&smoothing=20&content=';
 var oed_entry_url = 'http://www.oed.com/view/Entry/';
 var oed_thes_url = 'http://www.oed.com/view/th/class/';
 var standard_letter_frequencies = {E: 12.02, T: 9.10, A: 8.12, O: 7.68, I: 7.31, N: 6.95,
@@ -27,12 +27,9 @@ var lemma_details,
 	thesaurus_details,
 	theslinked_tokens,
 	lemma_tooltip,
-	document_year,
 	document_million_ratio,
 	button_animator,
 	colour_key,
-	definition_url,
-	thesaurus_url,
 	thesaurus_animation,
 	thesaurus_slider;
 
@@ -51,7 +48,6 @@ var thesaurusdata = initializeThesaurusData();
 var thesaurusdata_loaded = false;
 
 
-
 //===============================================================
 // Functions to run once the page has loaded
 //===============================================================
@@ -63,18 +59,18 @@ $(document).ready( function() {
 	letter_details = $('#letterDetails');
 	growth_details = $('#growthDetails');
 	lemma_tooltip = $('#lemmaTooltip');
-	document_year = $('#documentYear').text() * 1;
 	document_million_ratio = 1000000 / $('#documentNumTokens').text();
-	definition_url = $('#definitionUrl').text();
-	thesaurus_url = $('#thesaurusUrl').text();
 	colour_key = $('#continuousTextKey');
 	thesaurus_slider = $('#thesaurusSlider');
+
+	FrequencyTable.setDeltaBracket();
 
 	compileLinearText();
 	compileStatistics();
 	drawLanguageRatios();
 	drawTimelineChart();
 	drawGrowthChart();
+	compileFrequencyChanges();
 	writeThesaurusText();
 	initializeLemmaTable();
 	drawLetterFrequencies();
@@ -189,16 +185,23 @@ function hashLanguageColours(colourlist) {
 	return hash;
 }
 
-function languageToColour(language, mode) {
-	var colourset;
-	if (!language) {
-		colourset = language_colours_hash.other;
+function languageToNormalizedLanguage(language) {
+	// Given a language family (or null), return the normalized
+	// language category that will be used for colour-coding
+	var normalized;
+	if (! language) {
+		normalized = 'other';
+	} else if (! language_colours_hash[language]) {
+		normalized = 'other';
 	} else {
-		colourset = language_colours_hash[language];
-		if (!colourset) {
-			colourset = language_colours_hash.other;
-		}
+		normalized = language;
 	}
+	return normalized;
+}
+
+function languageToColour(language, mode) {
+	language = languageToNormalizedLanguage(language);
+	var colourset = language_colours_hash[language];
 	if (mode === 'bright') {
 		return colourset[1];
 	} else {
@@ -207,11 +210,22 @@ function languageToColour(language, mode) {
 }
 
 function colourKey(mode) {
+	// Poll the set of language families appearing in this document; only
+	//  these will appear in the key
+	var languages_in_document = {};
+	for (var i = 0; i < lemmadata.length; i += 1) {
+		var family = languageToNormalizedLanguage(lemmadata[i].family);
+		languages_in_document[family] = true;
+	}
+
+	// Create the HTML for the key
 	var html = '<div class="colourKey"><span>Key:</span>';
 	for (var i = 0; i < language_colours.length; i += 1) {
 		var language = language_colours[i][0];
-		var colour = languageToColour(language, mode);
-		html += '<span style="background-color: ' + colour + '">' + language + '</span>';
+		if (languages_in_document[language]) {
+			var colour = languageToColour(language, mode);
+			html += '<span class="colourKeySegment" style="background-color: ' + colour + '">' + language + '</span>';
+		}
 	}
 	html += '</div>';
 	return html;
@@ -244,31 +258,11 @@ function showLemmaDetails(lemma, event) {
 		year_text = year;
 	}
 
-	var frequency_text;
-	if (frequency < 0.0001) {
-		frequency_text = 'less than .0001';
-	} else {
-		frequency_text = 'about ' + frequency;
-	}
-
-	var inv_fq = inverseFrequency(frequency);
-	if (inv_fq === 1000000) {
-		inv_fq = 'million';
-	} else if (inv_fq >= 1000000) {
-		inv_fq = inv_fq / 1000000;
-		inv_fq = (inv_fq * 1) + ' million';
-	} else if (inv_fq === 1000) {
-		inv_fq = 'thousand';
-	} else if (inv_fq >= 1000) {
-		inv_fq = inv_fq / 1000;
-		inv_fq = (inv_fq * 1) + ',000';
-	} else {
-		inv_fq = inv_fq * 1;
-	}
-
+	// Fill in various blank fields in the pop-up
 	lemma_details.find('lem').html(lemma.lemma);
-	lemma_details.find('invfq').text(inv_fq);
-	lemma_details.find('fq').text(frequency_text);
+	lemma_details.find('invfq').text(inverseFrequency(frequency, true));
+	lemma_details.find('fqold').text(frequencyText(lemma.ftable.frequency(document_year)));
+	lemma_details.find('fqmod').text(frequencyText(frequency));
 	lemma_details.find('yr').text(year_text);
 	lemma_details.find('lang').text(lemma.language);
 	lemma_details.find('count').text(occurrence_text);
@@ -284,7 +278,7 @@ function showLemmaDetails(lemma, event) {
 
 	// The definition (if any) is not included in the JSON packet, so we
 	//  have to fetch this dynamically from the database via AJAX
-	fetchDefinition(lemma);
+	insertDefinition(lemma);
 
 	// Reposition the pop-up
 	lemma_details.css('left', (event.pageX) + 'px');
@@ -292,53 +286,22 @@ function showLemmaDetails(lemma, event) {
 	lemma_details.css('display', 'block');
 }
 
-
-function fetchDefinition(lemma) {
-	if (lemma.definitionid > 0) {
-		if (!lemma.definition) {
-			$.ajax({
-				type: 'GET',
-				url: definition_url + lemma.definitionid,
-				dataType: 'text',
-				complete: function(data) { lemma.definition = data.responseText; insertDefinition(lemma); },
-				error: function() { lemma.definition = ''; }
-			});
-		} else {
-			insertDefinition(lemma);
-		}
+function frequencyText(f) {
+	if (f < 0.0001) {
+		return 'less than .0001';
 	} else {
-		deleteDefinition();
+		return 'about ' + f;
 	}
 }
 
 function insertDefinition(lemma) {
-	if (lemma.definition) {
-		lemma_details.find('defn').html("'" + linesplitDefinition(lemma.definition) + "'");
+	var definition = lemma.linesplitDefinition();
+	if (definition) {
+		lemma_details.find('defn').html("'" + definition + "'");
 	}
 	else {
-		deleteDefinition();
+		lemma_details.find('defn').html('');
 	}
-}
-
-function deleteDefinition() {
-	lemma_details.find('defn').html('');
-}
-
-function linesplitDefinition(def) {
-	var lines = [];
-	var text = '';
-	var words = def.split(/ /);
-	for (var i = 0; i < words.length; i += 1) {
-		text += words[i] + ' ';
-		if (text.length > 50) {
-			lines.push(text);
-			text = '';
-		}
-	}
-	if (text) {
-		lines.push(text);
-	}
-	return lines.join('<br/>');
 }
 
 
@@ -778,7 +741,7 @@ function compileStatistics() {
 
 
 //===============================================================
-// Chart showing language family ratios
+// Chart showing language-family ratios
 //===============================================================
 
 function drawLanguageRatios() {
@@ -787,9 +750,8 @@ function drawLanguageRatios() {
 		total = 0;
 	for (i = 0; i < lemmadata.length; i += 1) {
 		var l = lemmadata[i];
-		var family = l.family;
-		if (!language_colours_hash[family]) { family = 'other'; }
-		if (!languages[family]) { languages[family] = 0; }
+		var family = languageToNormalizedLanguage(l.family);
+		if (! languages[family]) { languages[family] = 0; }
 		languages[family] += l.count;
 		total += l.count;
 	}
@@ -838,6 +800,7 @@ function drawLanguageRatios() {
 		.attr('height', bar_height)
 		.style('fill', function (d) { return languageToColour(d[0], 'bright'); });
 
+	// Draw text labels oevrlaying each bar
 	var labels = canvas.selectAll('.languageRatioLabel')
 		.data(percentages, function (d) { return d[0]; });
 	labels.enter().append('text')
@@ -857,7 +820,17 @@ function drawLanguageRatios() {
 //===============================================================
 
 function drawTimelineChart() {
-	var canvas_width = $('#timelineContainer').innerWidth() * 0.95;
+	// Draw the colour-coding key
+	$('div#scatterKey').append(colourKey('bright'));
+
+	var scatter_animator,
+		scatter_animator_year;
+	var buttons = $('button.scatterFrequencyControl');
+	buttons.each( function() {
+		$(this).data('year', $(this).text() * 1);
+	});
+
+	var canvas_width = $('#scatterChart').innerWidth() * 0.95;
 	var canvas_height = canvas_width * 0.6;
 	var y_padding = canvas_height * 0.1;
 
@@ -876,8 +849,8 @@ function drawTimelineChart() {
 	// coefficient used to set the radius of balloons
 	var dotscaler = canvas_width * 0.005;
 
-	// Create the SVG element (as a child of the #timelineContainer div)
-	var canvas = d3.select('#timelineContainer').append('svg')
+	// Create the SVG element (as a child of the #scatterChart div)
+	var canvas = d3.select('#scatterChart').append('svg')
 		.attr('width', canvas_width)
 		.attr('height', canvas_height)
 		.attr('overflow', 'hidden');
@@ -896,7 +869,7 @@ function drawTimelineChart() {
 		.attr('y', 0)
 		.attr('width', x_scale(1150))
 		.attr('height', canvas_height)
-		.attr('id', 'timelinePre1150');
+		.attr('id', 'scatterPre1150');
 
 	// Draw line indicating the document year
 	canvas.append('rect')
@@ -920,7 +893,7 @@ function drawTimelineChart() {
 					.orient('bottom');
 	x_axis.tickFormat(format_as_year);
 	canvas.append('g')
-		.attr('class', 'timelineAxis')
+		.attr('class', 'scatterAxis')
 		.attr('transform', 'translate(0,' + (canvas_height - y_padding) + ')')
 		.call(x_axis);
 
@@ -930,18 +903,21 @@ function drawTimelineChart() {
 					.orient('left')
 					.ticks(5, 'e');
 	canvas.append('g')
-		.attr('class', 'timelineAxis')
+		.attr('class', 'scatterAxis')
 		.attr('transform', 'translate(' + x_padding + ',0)')
 		.call(y_axis);
 	*/
 
 
 	// Draw balloons
-	var balloons = canvas.selectAll('.timelineBalloon')
+	var balloons = canvas.selectAll('.scatterBalloon')
 		.data(lemmadata, function (d) { return d.idx; });
 
 	balloons.enter().append('circle')
-		.attr('class', 'timelineBalloon')
+		.attr('class', function(d) {
+			return 'scatterBalloon scatterBalloon'
+				+ languageToNormalizedLanguage(d.family);
+		})
 		.attr('cx', function (d) {
 			if (d.year > 1150) {
 				return x_scale(d.year);
@@ -950,9 +926,39 @@ function drawTimelineChart() {
 				return x_scale(random_year);
 			}
 		})
-		.attr('cy', function (d) { return y_scale(clampedFrequency(d.f2000())); })
 		.style('fill', function (d) { return languageToColour(d.family, 'bright'); })
 		.attr('r', function (d) { return Math.sqrt(d.count) * dotscaler; });
+
+	// Set y-axis position of each bubble to frequencies for the document year
+	showFrequenciesForYear(document_year, 0);
+	// Highlight the appropriate button
+	highlightButton(document_year);
+
+
+	// Set event listeners for mouseovers on the colour key
+	$('div#scatterKey').find('span.colourKeySegment')
+		.mouseover( function() {
+			var language = $(this).text();
+			$('div#scatterChart circle.scatterBalloon' + language)
+				.css('stroke-width', '3');
+			balloons.each( function(d) {
+				if (languageToNormalizedLanguage(d.family) === language) {
+					var x = ($(this).attr('cx') * 1) + ($(this).attr('r') * 1);
+					var y = $(this).attr('cy') * 1;
+					canvas.append('text')
+						.attr('x', x + 5)
+						.attr('y', y)
+						.style('fill', 'darkgreen')
+						.style('font-size', '20px')
+						.text(d.lemma);
+				}
+			});
+		})
+		.mouseout( function() {
+			$('div#scatterChart circle.scatterBalloon')
+				.css('stroke-width', '');
+			$('div#scatterChart text').remove();
+		});
 
 
 	// Set event listener for clicks/mouseovers on balloons
@@ -968,7 +974,51 @@ function drawTimelineChart() {
 			hideLemmaTooltip(d, d3.event);
 		});
 
-	$('#timelineContainer').append(colourKey('bright'));
+
+	// Player function used to animate the scatter chart display
+	var scatter_player = function() {
+		showFrequenciesForYear(scatter_animator_year, 0);
+		highlightButton(scatter_animator_year);
+		if (scatter_animator_year >= 2000) {
+			clearInterval(scatter_animator);
+		}
+		scatter_animator_year += 5;
+	}
+	$('#playDiachronicFrequency').click( function() {
+		scatter_animator_year = document_year;
+		if (1750 < document_year) {
+			scatter_animator_year = 1750;
+		}
+		highlightButton(scatter_animator_year);
+		scatter_animator = setInterval(scatter_player, 100);
+	});
+
+
+	// Set event listeners for changing frequency display to different years
+	buttons.click( function() {
+		clearInterval(scatter_animator);
+		highlightButton($(this).data('year'));
+		showFrequenciesForYear($(this).data('year'), 300);
+	});
+
+	function showFrequenciesForYear(year, duration) {
+		balloons.transition()
+			.duration(duration)
+			.attr('cy', function (d) { return y_scale(clampedFrequency(d.ftable.frequency(year))); })
+	}
+
+	function highlightButton(target_year) {
+		buttons.removeClass('btn-primary');
+		var target = null;
+		buttons.each( function() {
+			if ($(this).data('year') <= target_year) {
+				target = $(this);
+			}
+		});
+		if (target) {
+			target.addClass('btn-primary');
+		}
+	}
 }
 
 
@@ -986,6 +1036,7 @@ function showLemmaTooltip(d, event) {
 function hideLemmaTooltip() {
 	lemma_tooltip.css('display', 'none');
 }
+
 
 
 
@@ -1050,7 +1101,7 @@ function drawGrowthChart() {
 					.orient('bottom');
 	x_axis.tickFormat(format_as_year);
 	canvas.append('g')
-		.attr('class', 'timelineAxis')
+		.attr('class', 'scatterAxis')
 		.attr('transform', 'translate(0,' + (canvas_height - y_padding) + ')')
 		.call(x_axis);
 
@@ -1058,7 +1109,7 @@ function drawGrowthChart() {
 					.scale(y_scale)
 					.orient('left');
 	canvas.append('g')
-		.attr('class', 'timelineAxis')
+		.attr('class', 'scatterAxis')
 		.attr('transform', 'translate(' + x_padding + ', 0)')
 		.call(y_axis);
 
@@ -1185,6 +1236,57 @@ function computeCumulative() {
 
 
 
+//===============================================================
+// Lemmas increasing/decreasing in frequency
+//===============================================================
+
+function compileFrequencyChanges() {
+	var increases = [];
+	var decreases = [];
+	var container;
+	for (var i = 0; i < lemmadata_sortable.length; i += 1) {
+		var l = lemmadata_sortable[i];
+		if (l.ftable.delta() > 1.3) {
+			increases.push(l);
+		} else if (l.ftable.delta() < 0.8) {
+			decreases.push(l);
+		}
+	}
+	increases.sort(function(a, b) {
+		return b.ftable.delta() - a.ftable.delta();
+	});
+	increases = increases.slice(0, 10);
+	decreases.sort(function(a, b) {
+		return a.ftable.delta() - b.ftable.delta();
+	});
+	decreases = decreases.slice(0, 10);
+
+	container = $('#increasingLemmas');
+	for (var i = 0; i < increases.length; i += 1) {
+		addFrequencyChangeRow(container, increases[i]);
+	}
+	// Set listeners for clicks
+	container.find('li').click( function(event) {
+		displayLemmaDetails($(this), event);
+	});
+
+	container = $('#decreasingLemmas');
+	for (var i = 0; i < decreases.length; i += 1) {
+		addFrequencyChangeRow(container, decreases[i]);
+	}
+	// Set listeners for clicks
+	container.find('li').click( function(event) {
+		displayLemmaDetails($(this), event);
+	});
+}
+
+function addFrequencyChangeRow(container, l) {
+	var li_tag = '<li class="token-oed" idx="' + l.idx + '">';
+	var row = $(li_tag + l.lemma + '</li>');
+	row.appendTo(container);
+}
+
+
 
 //===============================================================
 // Sortable table of lemmas
@@ -1207,7 +1309,7 @@ function initializeLemmaTable() {
 function composeLemmaTable() {
 	var tbody = $('#lemmaRank > tbody');
 	tbody.html(''); // discard any existing rows
-	for (var i = 0; i < lemmadata_sortable .length; i += 1) {
+	for (var i = 0; i < lemmadata_sortable.length; i += 1) {
 		var l = lemmadata_sortable[i];
 		var display_year = l.year;
 		if (display_year < 1150) {
@@ -1218,14 +1320,13 @@ function composeLemmaTable() {
 			display_fq = '&lt; .0001';
 		}
 
-		var tr_tag = '<tr class="token-oed" idx="' + l.idx + '">';
-		var row = $(tr_tag + '<td>' + (i + 1) + '</td><td class="lemmaCell">' + l.lemma + '</td><td>' + l.count + '</td><td>' + l.ftable.frequency(document_year, true) + '</td><td>' + display_fq + '</td><td>' + display_year + '</td><td>' + l.language + '</td></tr>');
+		var row = $('<tr><td>' + (i + 1) + '</td><td class="lemmaCell token-oed" idx="' + l.idx + '">' + l.lemma + '</td><td>' + l.count + '</td><td>' + l.ftable.frequency(document_year, true) + '</td><td>' + display_fq + '</td><td>' + display_year + '</td><td>' + l.language + '</td></tr>');
 		row.css('background-color', languageToColour(l.family, 'pale'));
 		row.appendTo(tbody);
 	}
 
 	// Set listeners for clicks on any row in the table body
-	$('#lemmaRank > tbody').find('tr').click( function(event) {
+	$('#lemmaRank > tbody').find('td.lemmaCell').click( function(event) {
 		displayLemmaDetails($(this), event);
 	});
 }
@@ -1370,7 +1471,7 @@ function drawLetterFrequencies() {
 		.domain(d3.range(0, letterdata.length))
 		.rangePoints([0, canvas_height], 2);
 
-	// Create the SVG element (as a child of the #timelineContainer div)
+	// Create the SVG element (as a child of the #letterFrequenciesContainer div)
 	var canvas = d3.select('#letterFrequenciesContainer').append('svg')
 		.attr('width', canvas_width)
 		.attr('height', canvas_height)
@@ -1516,9 +1617,27 @@ function equivalentFrequency(occurrences) {
 }
 
 
-function inverseFrequency(frequency) {
+function inverseFrequency(frequency, as_text) {
 	var inv_fq = 1000000 / clampedFrequency(frequency);
-	return inv_fq.toPrecision(1) * 1;
+	inv_fq = inv_fq.toPrecision(1) * 1;
+
+	if (as_text) {
+		if (inv_fq === 1000000) {
+			inv_fq = 'million';
+		} else if (inv_fq >= 1000000) {
+			inv_fq = inv_fq / 1000000;
+			inv_fq = (inv_fq * 1) + ' million';
+		} else if (inv_fq === 1000) {
+			inv_fq = 'thousand';
+		} else if (inv_fq >= 1000) {
+			inv_fq = inv_fq / 1000;
+			inv_fq = (inv_fq * 1) + ',000';
+		} else {
+			inv_fq = inv_fq * 1;
+		}
+	}
+
+	return inv_fq;
 }
 
 

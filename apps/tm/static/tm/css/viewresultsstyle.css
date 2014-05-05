@@ -128,29 +128,31 @@
 }
 
 
-/* Styles for the timeline chart */
+/* Styles for the scatter chart */
 
-#timelinePre1150 {
+#scatterPre1150 {
 	fill: #B3BFBF;
 }
 
-.timelineAxis path, .timelineAxis line {
+.scatterAxis path, .scatterAxis line {
 	fill: none;
 	stroke: black;
 	shape-rendering: crispEdges;
 }
 
-.timelineBalloon {
+circle.scatterBalloon {
 	stroke: #000000;
 	stroke-width: 1;
 }
 
-.timelineBalloon:hover {
+circle.scatterBalloon:hover {
 	stroke-width: 2;
 	cursor: pointer;
 }
 
-
+div#scatterKey span.colourKeySegment:hover {
+	cursor: pointer;
+}
 
 
 
@@ -164,7 +166,7 @@
 
 .growthCircle:hover {
 	stroke: #000000;
-	stroke-width: 2;	
+	stroke-width: 2;
 }
 
 

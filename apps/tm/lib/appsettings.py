@@ -94,3 +94,5 @@ LANGUAGE_ABBREVIATIONS = {'French': 'F', 'Latin': 'L',
 # Don't attempt to find thesaurus synonyms for these; very likely to
 #  be the wrong use or wrong p.o.s.
 THESAURUS_BARRED = {'like', 'even',}
+
+SCATTER_BUTTONS = [1750, 1800, 1850, 1900, 1950, 2000]

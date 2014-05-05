@@ -13,8 +13,8 @@ PIPELINE = (
     ('inflect_leanht', 0),
     ('populate_leanht_db', 0),
     ('index_proper', 0),
-    ('index_forms', 0),
-    ('refine_forms', 0),
+    ('index_forms', 1),
+    ('refine_forms', 1),
     ('populate_lexicon_db', 1),
     ('prepare_canned_texts', 1),
 )
