@@ -5,10 +5,6 @@
 var ngram_url = 'https://books.google.com/ngrams/graph?year_start=1750&year_end=2000&corpus=15&smoothing=20&content=';
 var oed_entry_url = 'http://www.oed.com/view/Entry/';
 var oed_thes_url = 'http://www.oed.com/view/th/class/';
-var standard_letter_frequencies = {E: 12.02, T: 9.10, A: 8.12, O: 7.68, I: 7.31, N: 6.95,
-	S: 6.28, R: 6.02, H: 5.92, D: 4.32, L: 3.98, U: 2.88, C: 2.71, M: 2.61,
-	F: 2.30, Y: 2.11, W: 2.09, G: 2.03, P: 1.82, B: 1.49, V: 1.11, K: 0.69, X: 0.17,
-	Q: 0.11, J: 0.10, Z: 0.07};
 var base_wordclasses = {'NN': 1, 'VB': 1, 'JJ': 1, 'RB': 1};
 
 var language_colours = [
@@ -22,7 +18,6 @@ var language_colours = [
 var language_colours_hash = hashLanguageColours(language_colours);
 
 var lemma_details,
-	letter_details,
 	growth_details,
 	thesaurus_details,
 	theslinked_tokens,
@@ -55,7 +50,6 @@ $(document).ready( function() {
 
 	lemma_details = $('#lemmaDetails');
 	thesaurus_details = $('#thesaurusDetails');
-	letter_details = $('#letterDetails');
 	growth_details = $('#growthDetails');
 	colour_key = $('#continuousTextKey');
 	thesaurus_slider = $('#thesaurusSlider');
@@ -1637,7 +1631,14 @@ function lemmaOccurrenceSort(direction) {
 //===============================================================
 
 function drawLetterFrequencies() {
+	var standard_letter_frequencies = {E: 12.02, T: 9.10, A: 8.12,
+		O: 7.68, I: 7.31, N: 6.95, S: 6.28, R: 6.02, H: 5.92, D: 4.32,
+		L: 3.98, U: 2.88, C: 2.71, M: 2.61, F: 2.30, Y: 2.11, W: 2.09,
+		G: 2.03, P: 1.82, B: 1.49, V: 1.11, K: 0.69, X: 0.17, Q: 0.11,
+		J: 0.10, Z: 0.07};
+
 	var letterdata = computeLetterFrequencies();
+	var letter_details = $('#letterDetails');
 	var canvas_width = $('#letterFrequenciesContainer').innerWidth() * 0.95;
 	var canvas_height = letterdata.length * 25;
 
@@ -1729,61 +1730,63 @@ function drawLetterFrequencies() {
 		toggleButtonState($(this), 'icon-align-left');
 	});
 
-}
 
-function showLetterDetails(d, event) {
-	// Populate the pop-up
-	letter_details.find('h2').text(d[0]);
-	letter_details.find('#letterDetailsFq').text(d[1].toPrecision(2));
-	letter_details.find('#letterDetailsTypical').text(standard_letter_frequencies[d[0]]);
-	// Reposition the pop-up
-	letter_details.css('left', (event.pageX) + 'px');
-	letter_details.css('top', (event.pageY) + 'px');
-	letter_details.css('display', 'block');
-}
-
-function hideLetterDetails() {
-	letter_details.css('display', 'none');
-}
-
-function computeLetterFrequencies() {
-	var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-	var counts = {};
-	for (var i = 0; i < letters.length; i += 1) {
-		counts[letters[i]] = 0;
+	function showLetterDetails(d, event) {
+		// Populate the pop-up
+		letter_details.find('h2').text(d[0]);
+		letter_details.find('#letterDetailsFq').text(d[1].toPrecision(2));
+		letter_details.find('#letterDetailsTypical').text(standard_letter_frequencies[d[0]]);
+		// Reposition the pop-up
+		letter_details.css('left', (event.pageX) + 'px');
+		letter_details.css('top', (event.pageY) + 'px');
+		letter_details.css('display', 'block');
 	}
-	var total = 0;
-	for (var i = 0; i < tokendata.length; i += 1) {
-		var t = tokendata[i];
-		if (t.status === 'punc') {
-			continue;
+
+	function hideLetterDetails() {
+		letter_details.css('display', 'none');
+	}
+
+	function computeLetterFrequencies() {
+		var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+		var counts = {};
+		for (var i = 0; i < letters.length; i += 1) {
+			counts[letters[i]] = 0;
 		}
-		var characters = t.token.toUpperCase().split('');
-		for (var j = 0; j < characters.length; j += 1) {
-			if (characters[j] in counts) {
-				counts[characters[j]] += 1;
-				total += 1;
+		var total = 0;
+		for (var i = 0; i < tokendata.length; i += 1) {
+			var t = tokendata[i];
+			if (t.status === 'punc') {
+				continue;
+			}
+			var characters = t.token.toUpperCase().split('');
+			for (var j = 0; j < characters.length; j += 1) {
+				if (characters[j] in counts) {
+					counts[characters[j]] += 1;
+					total += 1;
+				}
 			}
 		}
+
+		var percentages = [];
+		if (total > 0) {
+			var multiple = 100 / total;
+			for (var i = 0; i < letters.length; i += 1) {
+				percentages.push([letters[i], multiple * counts[letters[i]]]);
+			}
+		} else {
+			for (var i = 0; i < letters.length; i += 1) {
+				percentages.push([letters[i], 0]);
+			}
+		}
+		// Reverse sort by percentage
+		percentages.sort(function(a, b) {
+			return b[1] - a[1];
+		});
+		return percentages;
 	}
 
-	var percentages = [];
-	if (total > 0) {
-		var multiple = 100 / total;
-		for (var i = 0; i < letters.length; i += 1) {
-			percentages.push([letters[i], multiple * counts[letters[i]]]);
-		}
-	} else {
-		for (var i = 0; i < letters.length; i += 1) {
-			percentages.push([letters[i], 0]);
-		}
-	}
-	// Reverse sort by percentage
-	percentages.sort(function(a, b) {
-		return b[1] - a[1];
-	});
-	return percentages;
 }
+
 
 
 
