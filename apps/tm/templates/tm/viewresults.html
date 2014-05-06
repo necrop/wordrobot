@@ -281,26 +281,26 @@
 	<!-- Pop-up displaying lemma details -->
 	<div id="lemmaDetails" class="popup">
 		<div>
-			<h2 style="float: left"><a class="a-oed" href="#" target="ext"><lem></lem></a></h2>
+			<h2 style="float: left"><a class="a-oed" href="#" target="ext"></a></h2>
 			<span style="float: right"><i class="icon-remove icon-white lemmaDetailsCloser" style="cursor: pointer"></i></span>
 		</div>
 		<div class="clearfix"></div>
 		<div>
-			<p><em><defn></defn></em></p>
-			<p>Used <count></count> in this document <eqfq></eqfq>.</p>
-			<p>Frequency in {{ document_year }}: <fqold></fqold> per million tokens</p>
-			<p>Frequency in mod. English: <fqmod></fqmod> per million tokens</p>
-			<p>First recorded use: <yr></yr></p>
-			<p>Etymological origin: <lang></lang></p>
+			<p><em class="definition"></em></p>
+			<p>Used <span id="popupCountInDocument"></span> in this document <span id="popupEquivalentFrequency"></span></p>
+			<p>Frequency in {{ document_year }}: <span id="popupOldFrequency"></span> per million tokens</p>
+			<p>Frequency in mod. English: <span id="popupModFrequency"></span> per million tokens</p>
+			<p>First recorded use: <span id="popupFirstDate"></span></p>
+			<p>Etymological origin: <span id="popupLanguage"></span></p>
 			<p><a class="a-oed" href="#" target="ext">OED entry &raquo;</a></p>
 			<p><a class="a-ngram" href="#" target="ext">Google Ngram Viewer &raquo;</a></p>
 		</div>
 		<hr/>
 		<div>
-			Frequency data is derived from the 1970-2010 slice<br/>
+			Frequency data is derived from the 1970-2007 slice<br/>
 			of the <a href="https://books.google.com/ngrams" target="ext">Google Books Ngrams</a> data set. Based on this,<br/>
-			you can expect to come across &lsquo;<lem></lem>&rsquo; about<br/>
-			once every <invfq></invfq> words in modern English.
+			you can expect to come across &lsquo;<span id="popupLemma"></span>&rsquo; about<br/>
+			once every <span id="popupInverseFrequency"></span> words in modern English.
 		</div>
 		<hr/>
 		<button class="btn lemmaDetailsCloser"><i class="icon-remove"></i> close</button>

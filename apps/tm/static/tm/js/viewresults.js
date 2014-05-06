@@ -249,21 +249,25 @@ function showLemmaDetails(lemma, event) {
 		year_text = year;
 	}
 
-	// Fill in various blank fields in the pop-up
-	lemma_details.find('lem').html(lemma.lemma);
-	lemma_details.find('invfq').text(inverseFrequency(frequency, true));
-	lemma_details.find('fqold').text(frequencyText(lemma.ftable.frequency(document_year)));
-	lemma_details.find('fqmod').text(frequencyText(frequency));
-	lemma_details.find('yr').text(year_text);
-	lemma_details.find('lang').text(lemma.language);
-	lemma_details.find('count').text(occurrence_text);
-
+	var equivalent_text;
 	if (occurrences > 7) {
-		var eq_fq = equivalentFrequency(occurrences).toPrecision(2) * 1;
-		lemma_details.find('eqfq').text('(~ ' + eq_fq + ' per million tokens)');
+		var eq_frequency = equivalentFrequency(occurrences).toPrecision(2) * 1;
+		equivalent_text = '(~ ' + eq_frequency + ' per million tokens)';
 	} else {
-		lemma_details.find('eqfq').text('');
+		equivalent_text = '';
 	}
+
+	// Fill in various blank fields in the pop-up
+	lemma_details.find('h2 a').html(lemma.lemma);
+	lemma_details.find('#popupLemma').html(lemma.lemma);
+	lemma_details.find('#popupInverseFrequency').text(inverseFrequency(frequency, true));
+	lemma_details.find('#popupOldFrequency').text(frequencyText(lemma.ftable.frequency(document_year, true)));
+	lemma_details.find('#popupModFrequency').text(frequencyText(frequency));
+	lemma_details.find('#popupFirstDate').text(year_text);
+	lemma_details.find('#popupLanguage').text(lemma.language);
+	lemma_details.find('#popupCountInDocument').text(occurrence_text);
+	lemma_details.find('#popupEquivalentFrequency').text(equivalent_text);
+
 	lemma_details.find('a.a-oed').attr('href', oed_entry_url + lemma.url);
 	lemma_details.find('a.a-ngram').attr('href', ngram_url + lemma.lemma);
 
