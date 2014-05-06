@@ -46,7 +46,8 @@ for lemma, inflist in [
     ('her', "her, 'er"),
     ('him', "him, 'im"),
     ('she', 'she'),
-    ('he', 'he'),]:
+    ('he', 'he'),
+    ('other', 'others')]:
     for inflection in [i.strip() for i in inflist.split(',')]:
         INFLECTIONS[inflection] = lemma
 

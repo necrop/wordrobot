@@ -70,10 +70,10 @@
 						{% endif %}
 					</button>
 				{% endfor %}
-				<button class="btn" id="playDiachronicFrequency" title="Auto-play changes in frequencies"><i class="icon-play"></i></button>
+				<button class="btn" id="playDiachronicFrequency" title="Auto-play frequencies over time"><i class="icon-play"></i></button>
 			</div>
 
-			<div id="lemmaTooltip" class="popup">
+			<div id="scatterTooltip" class="popup">
 				<h2></h2>
 				<div>
 					<div>Click for more information.</div>
@@ -122,26 +122,36 @@
 
 	<div class="row-fluid">
 		<div class="span12 well">
-			<h2>Frequency change</h2>
+			<h2>Movers and shakers</h2>
 			{% if document_year < 1750 %}
 				<div class="commentary">
-					<p>This feature cannot be compiled for documents before 1750. This is because reliable frequency data is not available for earlier periods.</p>
+					<p>This feature cannot be compiled for documents before 1750, due to lack of reliable frequency data for earlier periods.</p>
 				</div>
 			{% else %}
 				<div class="commentary">
-					<p>The following words increased significantly in frequency in the period around {{ document_year }} (steepest rise first):</p>
-				</div>
-				<div>
-					<ul id="increasingLemmas"></ul>
+					<p>
+						The words shown here increase or decrease significantly in frequency around {{ document_year }}.
+						Words above the red line show an increase in frequency; words below the line show a decrease in frequency.
+					</p>
+					<p>
+						In general, change in frequency is derived by measuring the difference in frequency over a hundred year range (by default, from fifty years before the date of the document to fifty years after the date of the document).
+						However, this range may be adjusted if the document is close to the limits of reliable frequency data (1750 and 2000).
+					</p>
+					<p>
+						Very low frequency words are disregarded.
+					</p>
 				</div>
 
-				<div class="commentary">
-					<p>The following words declined significantly in frequency in the period around {{ document_year }} (steepest fall first):</p>
-				</div>
-				<div>
-					<ul id="decreasingLemmas"></ul>
-				</div>
+				<div id="frequencyChangeContainer"></div>
 			{% endif %}
+
+			<div id="frequencyChangeTooltip" class="popup">
+				<h2></h2>
+				<div>
+					<p id="frequencyChangeDetails"></p>
+					<p>Click for more details.</p>
+				</div>
+			</div>
 		</div>
 	</div>
 

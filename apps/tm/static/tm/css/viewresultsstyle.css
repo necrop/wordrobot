@@ -164,9 +164,23 @@ div#scatterKey span.colourKeySegment:hover {
     fill: none;
 }
 
-.growthCircle:hover {
+circle.growthCircle:hover {
 	stroke: #000000;
 	stroke-width: 2;
+}
+
+
+
+/* styles for the frequency-change chart */
+circle.frequencyChangePoint {
+	stroke: #000000;
+	stroke-width: 1;
+}
+
+circle.frequencyChangePoint:hover {
+	stroke: #000000;
+	stroke-width: 2;
+	cursor: pointer;
 }
 
 

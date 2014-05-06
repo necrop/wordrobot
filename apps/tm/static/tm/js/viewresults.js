@@ -26,7 +26,6 @@ var lemma_details,
 	growth_details,
 	thesaurus_details,
 	theslinked_tokens,
-	lemma_tooltip,
 	document_million_ratio,
 	button_animator,
 	colour_key,
@@ -58,10 +57,9 @@ $(document).ready( function() {
 	thesaurus_details = $('#thesaurusDetails');
 	letter_details = $('#letterDetails');
 	growth_details = $('#growthDetails');
-	lemma_tooltip = $('#lemmaTooltip');
-	document_million_ratio = 1000000 / $('#documentNumTokens').text();
 	colour_key = $('#continuousTextKey');
 	thesaurus_slider = $('#thesaurusSlider');
+	document_million_ratio = 1000000 / tokendata.length;
 
 	FrequencyTable.setDeltaBracket();
 
@@ -70,7 +68,7 @@ $(document).ready( function() {
 	drawLanguageRatios();
 	drawTimelineChart();
 	drawGrowthChart();
-	compileFrequencyChanges();
+	compileFrequencyChangeChart();
 	writeThesaurusText();
 	initializeLemmaTable();
 	drawLetterFrequencies();
@@ -354,8 +352,9 @@ function compileLinearText() {
 		}
 		toggleButtonState($(this), 'icon-search');
 		// Override the settings for the 'recent' button
-		if (buttonIsOn($('#focusRecentButton'))) {
-			toggleButtonState($('#focusRecentButton'), 'icon-search');
+		var button = $('#focusRecentButton');
+		if (buttonIsOn(button)) {
+			toggleButtonState(button, 'icon-search');
 		}
 	});
 
@@ -367,8 +366,9 @@ function compileLinearText() {
 		}
 		toggleButtonState($(this), 'icon-search');
 		// Override the settings for the 'rare' button
-		if (buttonIsOn($('#focusRareButton'))) {
-			toggleButtonState($('#focusRareButton'), 'icon-search');
+		var button = $('#focusRareButton');
+		if (buttonIsOn(button)) {
+			toggleButtonState(button, 'icon-search');
 		}
 	});
 }
@@ -415,7 +415,7 @@ function removeColourCoding() {
 function highlightLowFrequency() {
 	normalizeSize();
 	var tokens = $('#continuousText').find('.token-oed');
-	tokens.each( function(i) {
+	tokens.each( function() {
 		var lemma = elementToLemma($(this));
 		var band = frequency_band(lemma.f2000());
 		$(this).css('font-size', (band * 0.5) + 'em').css('opacity', 0.9);
@@ -566,11 +566,11 @@ function displayThesaurusPopup(source, record, event) {
 	var title_node = thesaurus_details.find('#thesaurusDetailsTitle');
 	var breadcrumb_node = thesaurus_details.find('#thesaurusDetailsBreadcrumb');
 	var instances_node = thesaurus_details.find('#thesaurusDetailsInstanceContainer');
-	title_node.text(source)
+	title_node.text(source);
 	breadcrumb_node.text(record.breadcrumb);
 	breadcrumb_node.attr('href', oed_thes_url + record.id);
 
-	instances_node.html('')
+	instances_node.html('');
 	for (var i = 0; i < record.instances.length; i+= 1) {
 		var instance = record.instances[i];
 		var url = oed_entry_url + instance.refentry + '#eid' + instance.refid;
@@ -635,7 +635,7 @@ function varyTheslinkedTokens() {
 }
 
 function resetTheslinkedTokens() {
-	theslinked_tokens.each(function(i) {
+	theslinked_tokens.each(function() {
 		var src = $(this).find('.src').text();
 		$(this).find('.disp').html(src);
 	})
@@ -800,7 +800,7 @@ function drawLanguageRatios() {
 		.attr('height', bar_height)
 		.style('fill', function (d) { return languageToColour(d[0], 'bright'); });
 
-	// Draw text labels oevrlaying each bar
+	// Draw text labels overlaying each bar
 	var labels = canvas.selectAll('.languageRatioLabel')
 		.data(percentages, function (d) { return d[0]; });
 	labels.enter().append('text')
@@ -820,12 +820,15 @@ function drawLanguageRatios() {
 //===============================================================
 
 function drawTimelineChart() {
+	var buttons,
+		scatter_tooltip,
+		scatter_animator,
+		scatter_animator_year;
+
 	// Draw the colour-coding key
 	$('div#scatterKey').append(colourKey('bright'));
 
-	var scatter_animator,
-		scatter_animator_year;
-	var buttons = $('button.scatterFrequencyControl');
+	buttons = $('button.scatterFrequencyControl');
 	buttons.each( function() {
 		$(this).data('year', $(this).text() * 1);
 	});
@@ -961,17 +964,17 @@ function drawTimelineChart() {
 		});
 
 
-	// Set event listener for clicks/mouseovers on balloons
+	// Set event listeners for clicks/mouseovers on balloons
 	balloons
 		.on('click', function (d) {
-			hideLemmaTooltip(d, d3.event);
+			hideScatterTooltip();
 			showLemmaDetails(d, d3.event);
 		})
 		.on('mouseover', function(d) {
-			showLemmaTooltip(d, d3.event);
+			showScatterTooltip(d, d3.event);
 		})
-		.on('mouseout', function(d) {
-			hideLemmaTooltip(d, d3.event);
+		.on('mouseout', function() {
+			hideScatterTooltip();
 		});
 
 
@@ -983,7 +986,7 @@ function drawTimelineChart() {
 			clearInterval(scatter_animator);
 		}
 		scatter_animator_year += 5;
-	}
+	};
 	$('#playDiachronicFrequency').click( function() {
 		scatter_animator_year = document_year;
 		if (1750 < document_year) {
@@ -1019,23 +1022,25 @@ function drawTimelineChart() {
 			target.addClass('btn-primary');
 		}
 	}
-}
 
 
-// Display the small pop-up showing the lemma name
-function showLemmaTooltip(d, event) {
-	// Populate the pop-up
-	lemma_tooltip.find('h2').html(d.lemma);
-	// Reposition the pop-up
-	lemma_tooltip.css('left', (event.pageX) + 'px');
-	lemma_tooltip.css('top', (event.pageY) + 'px');
-	lemma_tooltip.css('display', 'block');
+	// Display the small pop-up showing the lemma name
+	scatter_tooltip = $('#scatterTooltip');
+	function showScatterTooltip(d, event) {
+		// Populate the pop-up
+		scatter_tooltip.find('h2').html(d.lemma);
+		// Reposition the pop-up
+		scatter_tooltip.css('left', (event.pageX) + 'px');
+		scatter_tooltip.css('top', (event.pageY) + 'px');
+		scatter_tooltip.css('display', 'block');
+	}
+
+	// Hide the small pop-up showing the lemma name
+	function hideScatterTooltip() {
+		scatter_tooltip.css('display', 'none');
+	}
 }
 
-// Hide the small pop-up showing the lemma name
-function hideLemmaTooltip() {
-	lemma_tooltip.css('display', 'none');
-}
 
 
 
@@ -1071,7 +1076,7 @@ function drawGrowthChart() {
 		.attr('height', canvas_height)
 		.attr('overflow', 'hidden');
 
-	// Add a blue rectangle the same size as the SVG element, for the background
+	// Add a bordered rectangle the same size as the SVG element, for the background
 	canvas.append('rect')
 		.attr('x', 0)
 		.attr('y', 0)
@@ -1220,14 +1225,14 @@ function computeCumulative() {
 
 	var cumulative = {lemmas: [], tokens: []};
 	var running_totals = {lemmas: 0, tokens: 0};
-	for (var decade = 1150; decade < document_year; decade += 10) {
+	for (var period = 1150; period < document_year; period += 10) {
 		for (var mode in running_totals) {
-			if (counts[mode][decade]) {
-				running_totals[mode] += counts[mode][decade];
+			if (counts[mode][period]) {
+				running_totals[mode] += counts[mode][period];
 			}
 			// convert to percentage
 			var percentage = (100 / totals[mode]) * running_totals[mode];
-			cumulative[mode].push([decade, percentage]);
+			cumulative[mode].push([period, percentage]);
 		}
 	}
 
@@ -1240,51 +1245,227 @@ function computeCumulative() {
 // Lemmas increasing/decreasing in frequency
 //===============================================================
 
-function compileFrequencyChanges() {
-	var increases = [];
-	var decreases = [];
-	var container;
+function compileFrequencyChangeChart() {
+	var frequency_change_tooltip,
+		increases,
+		decreases,
+		lemmas;
+
+	// Compile the set of lemmas that will be displayed (those with the
+	// greatest increase or decrease in frequency)
+	increases = [];
+	decreases = [];
 	for (var i = 0; i < lemmadata_sortable.length; i += 1) {
 		var l = lemmadata_sortable[i];
-		if (l.ftable.delta() > 1.3) {
-			increases.push(l);
-		} else if (l.ftable.delta() < 0.8) {
-			decreases.push(l);
+		if (l.ftable.frequency(document_year) > 0.001) {
+			if (l.ftable.delta() > 1.3) {
+				increases.push(l);
+			} else if (l.ftable.delta() < 0.8) {
+				decreases.push(l);
+			}
 		}
 	}
+	// Get the 10 lemmas with greatest increase in frequency
 	increases.sort(function(a, b) {
 		return b.ftable.delta() - a.ftable.delta();
 	});
 	increases = increases.slice(0, 10);
+
+	// Get the 10 lemmas with the greatest decrease in frequency
 	decreases.sort(function(a, b) {
 		return a.ftable.delta() - b.ftable.delta();
 	});
 	decreases = decreases.slice(0, 10);
-
-	container = $('#increasingLemmas');
-	for (var i = 0; i < increases.length; i += 1) {
-		addFrequencyChangeRow(container, increases[i]);
-	}
-	// Set listeners for clicks
-	container.find('li').click( function(event) {
-		displayLemmaDetails($(this), event);
+	// ... make sure they're sorted consistently with increases
+	decreases.sort(function(a, b) {
+		return b.ftable.delta() - a.ftable.delta();
 	});
+	// Concatenate to give a single array of data points
+	lemmas = increases.concat(decreases);
 
-	container = $('#decreasingLemmas');
-	for (var i = 0; i < decreases.length; i += 1) {
-		addFrequencyChangeRow(container, decreases[i]);
+
+	var canvas_width = $('#frequencyChangeContainer').innerWidth();
+	var canvas_height = canvas_width * 0.5;
+	var radius = canvas_height * 0.01;
+
+	// Create the SVG element (as a child of the #frequencyChangeContainer div)
+	var canvas = d3.select('#frequencyChangeContainer').append('svg')
+		.attr('width', canvas_width)
+		.attr('height', canvas_height)
+		.attr('overflow', 'hidden');
+
+	// Add a bordered rectangle the same size as the SVG element, for the background
+	canvas.append('rect')
+		.attr('x', 0)
+		.attr('y', 0)
+		.attr('width', canvas_width)
+		.attr('height', canvas_height)
+		.attr('class', 'chartBackground');
+
+	// Draw up and down arrows
+	var upArrowFunction = d3.svg.line()
+		.x(function(d) { return d.x * canvas_width; })
+		.y(function(d) { return d.y * canvas_height; })
+		.interpolate('linear');
+	var downArrowFunction = d3.svg.line()
+		.x(function(d) { return d.x * canvas_width; })
+		.y(function(d) { return (1 - d.y) * canvas_height; })
+		.interpolate('linear');
+	var arrow_data = [{'x': 0.3, 'y': 0.35},  {'x': 0.5, 'y': 0.05},
+						{'x': 0.7, 'y': 0.35}, {'x': 0.6, 'y': 0.35},
+						{'x': 0.6, 'y': 0.45}, {'x': 0.4, 'y': 0.45},
+						{'x': 0.4, 'y': 0.35}, {'x': 0.3, 'y': 0.35}];
+	canvas.append('path')
+		.attr('d', upArrowFunction(arrow_data))
+		.style('stroke', 'none')
+		.style('fill', 'green')
+		.style('opacity', 0.2);
+	canvas.append('path')
+		.attr('d', downArrowFunction(arrow_data))
+		.style('stroke', 'none')
+		.style('fill', 'red')
+		.style('opacity', 0.2);
+
+	// Draw red line to indicate mid point
+	canvas.append('rect')
+		.attr('x', 0)
+		.attr('y', canvas_height * 0.5)
+		.attr('width', canvas_width)
+		.attr('height', 1)
+		.attr('fill', '#FF0000');
+
+
+	// x-axis scale - absolute frequency at document year
+	var x_domain;
+	if (lemmas.length > 1) {
+		x_domain = [d3.min(lemmas, function(d) { return d.ftable.frequency(document_year); }),
+					d3.max(lemmas, function(d) { return d.ftable.frequency(document_year); })];
+	} else if (lemmas.length === 1) {
+		x_domain = [0.1, lemmas[0].ftable.frequency(document_year)];
+	} else {
+		x_domain = [0.1, 1];
 	}
-	// Set listeners for clicks
-	container.find('li').click( function(event) {
-		displayLemmaDetails($(this), event);
-	});
+	var x_scale = d3.scale.log()
+		.domain(x_domain)
+		.range([canvas_width * 0.05, canvas_width * 0.9]);
+
+	// y-axis scale - rate of change
+	// Two separate y-scales, since we essentially draw two charts: one in
+	//   the top half for lemmas increasing in frequency, the other in the
+	//   bottom half for lemmas decreasing in frequency.
+	var y_domain1;
+	if (increases.length > 1) {
+		y_domain1 = [increases[0].ftable.delta(), increases[increases.length-1].ftable.delta()];
+	} else if (increases.length === 1) {
+		y_domain1 = [0.1, increases[0].ftable.delta()];
+	} else {
+		y_domain1 = [0.1, 1];
+	}
+	var y_scale_increasing = d3.scale.log()
+		.domain(y_domain1)
+		.range([canvas_height * 0.05, canvas_height * 0.45]);
+
+	var y_domain2;
+	if (decreases.length > 1) {
+		y_domain2 = [decreases[0].ftable.delta(), decreases[decreases.length-1].ftable.delta()];
+	} else if (decreases.length === 1) {
+		y_domain2 = [0.1, decreases[0].ftable.delta()];
+	} else {
+		y_domain2 = [0.1, 1];
+	}
+	var y_scale_decreasing = d3.scale.log()
+		.domain(y_domain2)
+		.range([canvas_height * 0.55, canvas_height * 0.95]);
+
+	// Draw lemma labels
+	var font_size = canvas_height * 0.03;
+	var labels = canvas.selectAll('text')
+		.data(lemmas);
+
+	labels.enter().append('text')
+		.attr('class', 'frequencyChangeText')
+		.attr('x', function(d) { return x_position(d) + (radius * 2); })
+		.attr('y', function(d) { return y_position(d); })
+		.text( function(d) { return d.lemma; })
+		.style('fill', 'black')
+		.style('font-size', font_size + 'px');
+
+	// Draw data points
+	var datapoints = canvas.selectAll('circle')
+		.data(lemmas, function (d) { return d.id; });
+
+	datapoints.enter().append('circle')
+		.attr('class', 'frequencyChangePoint')
+		.attr('cx', function(d) { return x_position(d); })
+		.attr('cy', function(d) { return y_position(d); })
+		.attr('r', radius)
+		.style('fill', function(d) { return frequencyChangeColor(d); });
+
+	function x_position(d) {
+		return x_scale(d.ftable.frequency(document_year));
+	}
+
+	function y_position(d) {
+		if (d.ftable.increasing()) {
+			return y_scale_increasing(d.ftable.delta());
+		} else {
+			return y_scale_decreasing(d.ftable.delta());
+		}
+	}
+
+	function frequencyChangeColor(d) {
+		if (d.ftable.increasing()) {
+			return '#00CC00';
+		} else {
+			return '#FF0000';
+		}
+	}
+
+
+	// Set event listeners for clicks/mouseovers on data points
+	datapoints
+		.on('click', function (d) {
+			hideFrequencyChangeTooltip();
+			showLemmaDetails(d, d3.event);
+		})
+		.on('mouseover', function(d) {
+			showFrequencyChangeTooltip(d, d3.event);
+		})
+		.on('mouseout', function() {
+			hideFrequencyChangeTooltip();
+		});
+
+	// Display the small pop-up showing the lemma name
+	frequency_change_tooltip = $('div#frequencyChangeTooltip');
+	function showFrequencyChangeTooltip(d, event) {
+		var text = frequencyChangeTooltipText(d);
+		// Populate the pop-up
+		frequency_change_tooltip.find('h2').html(d.lemma);
+		frequency_change_tooltip.find('p#frequencyChangeDetails').html(text);
+		// Reposition the pop-up
+		frequency_change_tooltip.css('left', (event.pageX) + 'px');
+		frequency_change_tooltip.css('top', (event.pageY) + 'px');
+		frequency_change_tooltip.css('display', 'block');
+	}
+
+	// Hide the small pop-up showing the lemma name
+	function hideFrequencyChangeTooltip() {
+		frequency_change_tooltip.css('display', 'none');
+	}
+
+	function frequencyChangeTooltipText(d) {
+		var text = 'This word ';
+		if (d.ftable.increasing()) {
+			text += 'increased';
+		} else {
+			text += 'decreased';
+		}
+		text += ' in frequency<br/>by x ' + (d.ftable.delta() * 1.0);
+		text += ' between ' + d.ftable.delta_start + ' and ' + d.ftable.delta_end + '.';
+		return text;
+	}
 }
 
-function addFrequencyChangeRow(container, l) {
-	var li_tag = '<li class="token-oed" idx="' + l.idx + '">';
-	var row = $(li_tag + l.lemma + '</li>');
-	row.appendTo(container);
-}
 
 
 
@@ -1477,7 +1658,7 @@ function drawLetterFrequencies() {
 		.attr('height', canvas_height)
 		.attr('overflow', 'hidden');
 
-	// Add a blue rectangle the same size as the SVG element, for the background
+	// Add a bordered rectangle the same size as the SVG element, for the background
 	canvas.append('rect')
 		.attr('x', 0)
 		.attr('y', 0)
@@ -1530,7 +1711,7 @@ function drawLetterFrequencies() {
 		.on('mouseover', function (d) {
 			showLetterDetails(d, d3.event);
 		})
-		.on('mouseout', function (d) {
+		.on('mouseout', function () {
 			hideLetterDetails();
 		});
 

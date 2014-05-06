@@ -24,6 +24,11 @@ function FrequencyTable(data, startyear) {
 		this.ordered.push(key);
 	}
 	this.ordered.sort();
+
+	// Values used for delta (change in frequency)
+	this.delta_value = null;
+	this.delta_start = null;
+	this.delta_end = null;
 }
 
 // These dummy values should be overwritten by
@@ -68,19 +73,55 @@ FrequencyTable.prototype.interpolate = function(year) {
 }
 
 FrequencyTable.prototype.delta = function() {
-	if (document_year < 1730) {
-		return 1;
-	} else {
-		var start = this.frequency(FrequencyTable.delta_floor, false);
-		if (start < 0.0001) {
-			start = 0.0001;
-		}
-		var end = this.frequency(FrequencyTable.delta_ceiling, false);
-		if (end < 0.0001) {
-			end = 0.0001;
-		}
-		return (end / start).toPrecision(2);
+	// Return the rate of change (positive or negative) from the start to
+	// the end of the delta bracket
+	if (this.delta_value == null) {
+		var z = this.compute_delta();
+		this.delta_value = z[0];
+		this.delta_start = z[1];
+		this.delta_end = z[2];
 	}
+	return this.delta_value;
+}
+
+FrequencyTable.prototype.increasing = function() {
+	// Return true if frequency is increasing during the delta bracket
+	//  (i.e. this.delta() is greater than 1).
+	if (this.delta() > 1) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+
+FrequencyTable.prototype.compute_delta = function() {
+	// Avoid using a start-date that's earlier than the lemma's
+	// first date (where frequency=0), since this could produce
+	// an infinite result
+	var delta;
+
+	var start_date = FrequencyTable.delta_floor;
+	if (start_date < this.startyear + 5) {
+		start_date = this.startyear + 5;
+	}
+
+	if (document_year < 1730) {
+		delta = 1;
+	} else if (FrequencyTable.delta_ceiling - start_date < 20) {
+		delta = 1;
+	} else {
+		var start_frequency = this.frequency(start_date, false);
+		if (start_frequency < 0.0001) {
+			start_frequency = 0.0001;
+		}
+		var end_frequency = this.frequency(FrequencyTable.delta_ceiling, false);
+		if (end_frequency < 0.0001) {
+			end_frequency = 0.0001;
+		}
+		delta = (end_frequency / start_frequency).toPrecision(2);
+	}
+	return [delta, start_date, FrequencyTable.delta_ceiling];
 }
 
 
