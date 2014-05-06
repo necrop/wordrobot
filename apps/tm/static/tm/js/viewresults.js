@@ -291,12 +291,14 @@ function frequencyText(f) {
 
 function insertDefinition(lemma) {
 	var definition = lemma.linesplitDefinition();
+	var html;
 	if (definition) {
-		lemma_details.find('defn').html("'" + definition + "'");
+		html = "'" + definition + "'";
 	}
 	else {
-		lemma_details.find('defn').html('');
+		html = '';
 	}
+	lemma_details.find('#popupDefinition').html(html);
 }
 
 
