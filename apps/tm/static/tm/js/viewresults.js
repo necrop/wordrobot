@@ -950,8 +950,7 @@ function drawTimelineChart() {
 					canvas.append('text')
 						.attr('x', x + 5)
 						.attr('y', y)
-						.style('fill', 'darkgreen')
-						.style('font-size', '20px')
+						.attr('class', 'scatterLabel')
 						.text(d.lemma);
 				}
 			});
@@ -959,7 +958,7 @@ function drawTimelineChart() {
 		.mouseout( function() {
 			$('div#scatterChart circle.scatterBalloon')
 				.css('stroke-width', '');
-			$('div#scatterChart text').remove();
+			$('div#scatterChart text.scatterLabel').remove();
 		});
 
 
@@ -1453,13 +1452,13 @@ function compileFrequencyChangeChart() {
 	}
 
 	function frequencyChangeTooltipText(d) {
-		var text = 'This word ';
+		var text = '';
 		if (d.ftable.increasing()) {
-			text += 'increased';
+			text += 'Increased';
 		} else {
-			text += 'decreased';
+			text += 'Decreased';
 		}
-		text += ' in frequency<br/>by x ' + (d.ftable.delta() * 1.0);
+		text += ' in frequency by a factor<br/>of ' + (d.ftable.delta() * 1.0);
 		text += ' between ' + d.ftable.delta_start + ' and ' + d.ftable.delta_end + '.';
 		return text;
 	}

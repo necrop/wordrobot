@@ -131,15 +131,16 @@
 			{% else %}
 				<div class="commentary">
 					<p>
-						The words shown here increase or decrease significantly in frequency around {{ document_year }}.
-						Words above the red line show an increase in frequency; words below the line show a decrease in frequency.
+						The words shown here increased or decreased significantly in frequency around {{ document_year }}.
+						Words above the red line increased in frequency; words below the line decreased in frequency.
 					</p>
 					<p>
 						In general, change in frequency is derived by measuring the difference in frequency over a hundred year range (by default, from fifty years before the date of the document to fifty years after the date of the document).
 						However, this range may be adjusted if the document is close to the limits of reliable frequency data (1750 and 2000).
 					</p>
 					<p>
-						Very low frequency words are disregarded.
+						Absolute frequency (in {{ document_year }}) is indicated by position on the x-axis; lower-frequency words are to the left, higher-frequency words to the right.
+						Very low frequency words have been disregarded.
 					</p>
 				</div>
 
